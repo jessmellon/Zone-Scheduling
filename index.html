@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dates Calendar</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">Google Sheet Calendar</p>
+          <h1>Dates tab in calendar view</h1>
+          <p class="hero-copy">
+            Live from the shared Google Sheet, grouped by column E
+            <strong>Zone</strong>.
+          </p>
+        </div>
+        <div class="hero-card">
+          <p class="card-label">Source</p>
+          <a
+            class="sheet-link"
+            href="https://docs.google.com/spreadsheets/d/1_KPdGkIe-tQrKEFxqAfJL87VvX73aEPuwVW5G_b4zOI/edit?usp=sharing"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Open Google Sheet
+          </a>
+          <p id="last-updated" class="meta-text">Loading sheet data...</p>
+        </div>
+      </header>
+
+      <main class="layout">
+        <aside class="sidebar">
+          <section class="panel">
+            <p class="panel-label">Breakdown</p>
+            <div id="category-summary" class="summary-list"></div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-row">
+              <p class="panel-label">Filter</p>
+              <button id="reset-filter" class="ghost-button" type="button">
+                Show all
+              </button>
+            </div>
+            <div id="filter-list" class="filter-list"></div>
+          </section>
+
+          <section class="panel">
+            <p class="panel-label">Details</p>
+            <div id="selection-details" class="details-empty">
+              Select an event on the calendar to inspect it.
+            </div>
+          </section>
+        </aside>
+
+        <section class="calendar-panel">
+          <div class="calendar-toolbar">
+            <div class="month-controls">
+              <button id="prev-month" class="nav-button" type="button">
+                Previous
+              </button>
+              <h2 id="month-label">Month</h2>
+              <button id="next-month" class="nav-button" type="button">
+                Next
+              </button>
+            </div>
+            <button id="today-button" class="primary-button" type="button">
+              Jump to current month
+            </button>
+          </div>
+
+          <div class="view-switch" role="tablist" aria-label="Calendar views">
+            <button
+              id="events-view-button"
+              class="view-button active"
+              type="button"
+            >
+              Schools
+            </button>
+            <button
+              id="staffing-view-button"
+              class="view-button"
+              type="button"
+            >
+              Zone staffing
+            </button>
+          </div>
+
+          <div class="weekday-row">
+            <span>Sun</span>
+            <span>Mon</span>
+            <span>Tue</span>
+            <span>Wed</span>
+            <span>Thu</span>
+            <span>Fri</span>
+            <span>Sat</span>
+          </div>
+
+          <div id="status-banner" class="status-banner">Loading calendar…</div>
+          <div id="calendar-grid" class="calendar-grid"></div>
+        </section>
+      </main>
+    </div>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
