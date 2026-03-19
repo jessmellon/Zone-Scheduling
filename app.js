@@ -8,6 +8,7 @@ const state = {
   events: [],
   currentMonth: null,
   selectedCategory: null,
+  selectedStaffingZone: null,
   selectedEventId: null,
   searchTerm: "",
   viewMode: "events",
@@ -42,6 +43,7 @@ document.querySelector("#today-button").addEventListener("click", () => {
 
 document.querySelector("#reset-filter").addEventListener("click", () => {
   state.selectedCategory = null;
+  state.selectedStaffingZone = null;
   render();
 });
 
@@ -227,7 +229,7 @@ function renderHeader() {
       `${totalPhotographers} Photog${
         totalPhotographers === 1 ? "" : "s"
       } scheduled${
-        state.selectedCategory ? ` for ${state.selectedCategory}` : ""
+        state.selectedStaffingZone ? ` for ${state.selectedStaffingZone}` : ""
       }`
     );
     return;
@@ -268,19 +270,26 @@ function renderFilters() {
 
   filterList.innerHTML = "";
   counts.forEach(({ category, value }) => {
+    const isActive =
+      state.viewMode === "staffing"
+        ? state.selectedStaffingZone === category
+        : state.selectedCategory === category;
     const button = document.createElement("button");
     button.type = "button";
-    button.className = `filter-chip${
-      state.selectedCategory === category ? " active" : ""
-    }`;
+    button.className = `filter-chip${isActive ? " active" : ""}`;
     button.innerHTML = `
       <span class="dot" style="background:${getCategoryColor(category)}"></span>
       <span>${escapeHtml(category)}</span>
       <span class="summary-count">${value}</span>
     `;
     button.addEventListener("click", () => {
-      state.selectedCategory =
-        state.selectedCategory === category ? null : category;
+      if (state.viewMode === "staffing") {
+        state.selectedStaffingZone =
+          state.selectedStaffingZone === category ? null : category;
+      } else {
+        state.selectedCategory =
+          state.selectedCategory === category ? null : category;
+      }
       render();
     });
     filterList.appendChild(button);
@@ -490,7 +499,7 @@ function renderDetails() {
         ${renderDetailItem("Warnings", "Yellow = within 2, red = at limit, dark red = over")}
         ${renderDetailItem(
           "Filter",
-          state.selectedCategory || "All zones"
+          state.selectedStaffingZone || "All zones"
         )}
       </div>
     `;
@@ -589,11 +598,14 @@ function renderDetailItem(label, value) {
 }
 
 function getVisibleEvents() {
-  if (!state.selectedCategory) {
+  const activeCategory =
+    state.viewMode === "staffing" ? state.selectedStaffingZone : state.selectedCategory;
+
+  if (!activeCategory) {
     return state.events;
   }
 
-  return state.events.filter((event) => event.category === state.selectedCategory);
+  return state.events.filter((event) => event.category === activeCategory);
 }
 
 function countByCategory(events) {
@@ -656,8 +668,8 @@ function buildZoneTotals(events) {
 }
 
 function getDisplayedZones() {
-  if (state.viewMode === "staffing" && state.selectedCategory) {
-    return [state.selectedCategory];
+  if (state.viewMode === "staffing" && state.selectedStaffingZone) {
+    return [state.selectedStaffingZone];
   }
 
   return ALL_ZONES;
