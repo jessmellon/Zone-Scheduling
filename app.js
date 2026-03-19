@@ -166,6 +166,7 @@ function buildEvents(sheetData) {
       }
 
       const title = readCell(row.c, indexes.title) || "Untitled";
+      const schoolName = normalizeSchoolName(title);
       const category = normalizeZone(readCell(row.c, indexes.category)) || "Unassigned";
 
       if (category === "Z6") {
@@ -175,6 +176,7 @@ function buildEvents(sheetData) {
       return {
         id: `${title}-${rowIndex}-${formatDateKey(parsedDate)}`,
         title,
+        schoolName,
         category,
         date: parsedDate,
         stars: readCell(row.c, indexes.stars),
@@ -523,7 +525,7 @@ function renderSearchResults() {
   }
 
   const matchingEvents = state.events.filter((event) =>
-    event.title.toLowerCase().includes(term)
+    event.schoolName.toLowerCase().includes(term)
   );
 
   if (!matchingEvents.length) {
@@ -531,9 +533,9 @@ function renderSearchResults() {
     return;
   }
 
-  const grouped = groupEventsByTitle(matchingEvents);
+  const grouped = groupEventsBySchool(matchingEvents);
   const cardsMarkup = grouped
-    .map(({ title, events }) => {
+    .map(({ schoolName, events }) => {
       const itemsMarkup = events
         .sort((left, right) => left.date - right.date)
         .map((event) => {
@@ -556,7 +558,7 @@ function renderSearchResults() {
 
       return `
         <div class="search-result-card">
-          <h3>${escapeHtml(title)}</h3>
+          <h3>${escapeHtml(schoolName)}</h3>
           <div class="search-result-list">${itemsMarkup}</div>
         </div>
       `;
@@ -595,19 +597,19 @@ function countByCategory(events) {
     .sort(compareZoneEntries);
 }
 
-function groupEventsByTitle(events) {
+function groupEventsBySchool(events) {
   const groups = new Map();
 
   events.forEach((event) => {
-    if (!groups.has(event.title)) {
-      groups.set(event.title, []);
+    if (!groups.has(event.schoolName)) {
+      groups.set(event.schoolName, []);
     }
-    groups.get(event.title).push(event);
+    groups.get(event.schoolName).push(event);
   });
 
   return [...groups.entries()]
-    .map(([title, groupedEvents]) => ({ title, events: groupedEvents }))
-    .sort((left, right) => left.title.localeCompare(right.title));
+    .map(([schoolName, groupedEvents]) => ({ schoolName, events: groupedEvents }))
+    .sort((left, right) => left.schoolName.localeCompare(right.schoolName));
 }
 
 function sumPhotographersByCategory(events) {
@@ -953,6 +955,12 @@ function normalizeZone(value) {
     return `Z${match[1]}`;
   }
   return trimmed;
+}
+
+function normalizeSchoolName(value) {
+  return String(value || "")
+    .replace(/\s+Z[1-6][A-Z]*$/i, "")
+    .trim();
 }
 
 function compareZoneEntries(left, right) {
