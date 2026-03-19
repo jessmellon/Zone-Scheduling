@@ -356,13 +356,13 @@ h1 {
 .day-groups {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
 }
 
 .group-block {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 2px;
 }
 
 .group-label {
@@ -378,7 +378,7 @@ h1 {
   border: 0;
   border-left: 4px solid transparent;
   border-radius: 12px;
-  padding: 8px 10px;
+  padding: 5px 7px;
   background: rgba(255, 255, 255, 0.9);
   color: var(--text);
 }
@@ -422,8 +422,8 @@ h1 {
 }
 
 .planner-card {
-  padding: 10px;
-  border-radius: 14px;
+  padding: 7px;
+  border-radius: 12px;
   border: 1px solid var(--line);
   background: rgba(255, 255, 255, 0.88);
 }
@@ -433,12 +433,12 @@ h1 {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 .planner-title,
 .planner-total {
-  font-size: 0.8rem;
+  font-size: 0.72rem;
 }
 
 .planner-title {
@@ -450,15 +450,15 @@ h1 {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  margin-top: 8px;
+  margin-top: 4px;
 }
 
 .zone-limit-field {
-  margin-top: 10px;
+  margin-top: 5px;
 }
 
 .limit-label {
-  font-size: 0.72rem;
+  font-size: 0.62rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: inherit;
@@ -466,12 +466,13 @@ h1 {
 }
 
 .limit-input {
-  width: 72px;
+  width: 54px;
   border: 1px solid var(--line);
   border-radius: 10px;
-  padding: 6px 8px;
+  padding: 3px 5px;
   background: rgba(255, 255, 255, 0.92);
   color: var(--text);
+  font-size: 0.74rem;
 }
 
 .capacity-critical .limit-input {
@@ -481,14 +482,14 @@ h1 {
 .event-title {
   display: block;
   font-weight: 700;
-  font-size: 0.85rem;
+  font-size: 0.78rem;
 }
 
 .event-meta {
   display: block;
-  margin-top: 4px;
+  margin-top: 1px;
   color: var(--muted);
-  font-size: 0.76rem;
+  font-size: 0.68rem;
 }
 
 .status-banner {
