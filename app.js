@@ -9,6 +9,7 @@ const state = {
   currentMonth: null,
   selectedCategory: null,
   selectedEventId: null,
+  searchTerm: "",
   viewMode: "events",
   categoryColors: new Map(),
   limits: emptyLimits(),
@@ -21,6 +22,8 @@ const filterList = document.querySelector("#filter-list");
 const selectionDetails = document.querySelector("#selection-details");
 const statusBanner = document.querySelector("#status-banner");
 const lastUpdated = document.querySelector("#last-updated");
+const searchInput = document.querySelector("#school-search");
+const searchResults = document.querySelector("#search-results");
 
 document.querySelector("#prev-month").addEventListener("click", () => {
   state.currentMonth = addMonths(state.currentMonth, -1);
@@ -52,6 +55,11 @@ document.querySelector("#staffing-view-button").addEventListener("click", () => 
   state.viewMode = "staffing";
   state.selectedEventId = null;
   render();
+});
+
+searchInput.addEventListener("input", (event) => {
+  state.searchTerm = event.target.value.trim();
+  renderSearchResults();
 });
 
 loadCalendar();
@@ -189,6 +197,7 @@ function render() {
   renderFilters();
   renderCalendar();
   renderDetails();
+  renderSearchResults();
 }
 
 function renderViewSwitch() {
@@ -505,6 +514,58 @@ function renderDetails() {
   `;
 }
 
+function renderSearchResults() {
+  const term = state.searchTerm.trim().toLowerCase();
+
+  if (!term) {
+    searchResults.textContent = "Start typing to see a school's dates.";
+    return;
+  }
+
+  const matchingEvents = state.events.filter((event) =>
+    event.title.toLowerCase().includes(term)
+  );
+
+  if (!matchingEvents.length) {
+    searchResults.textContent = "No matching schools found.";
+    return;
+  }
+
+  const grouped = groupEventsByTitle(matchingEvents);
+  const cardsMarkup = grouped
+    .map(({ title, events }) => {
+      const itemsMarkup = events
+        .sort((left, right) => left.date - right.date)
+        .map((event) => {
+          return `
+            <div class="search-result-item">
+              <span class="search-result-date">${escapeHtml(
+                event.date.toLocaleDateString(undefined, {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })
+              )}</span>
+              <span class="search-result-meta">${escapeHtml(
+                [event.category, event.type].filter(Boolean).join(" • ")
+              )}</span>
+            </div>
+          `;
+        })
+        .join("");
+
+      return `
+        <div class="search-result-card">
+          <h3>${escapeHtml(title)}</h3>
+          <div class="search-result-list">${itemsMarkup}</div>
+        </div>
+      `;
+    })
+    .join("");
+
+  searchResults.innerHTML = cardsMarkup;
+}
+
 function renderDetailItem(label, value) {
   return `
     <div class="detail-item">
@@ -532,6 +593,21 @@ function countByCategory(events) {
   return [...counts.entries()]
     .map(([category, count]) => ({ category, value: count }))
     .sort(compareZoneEntries);
+}
+
+function groupEventsByTitle(events) {
+  const groups = new Map();
+
+  events.forEach((event) => {
+    if (!groups.has(event.title)) {
+      groups.set(event.title, []);
+    }
+    groups.get(event.title).push(event);
+  });
+
+  return [...groups.entries()]
+    .map(([title, groupedEvents]) => ({ title, events: groupedEvents }))
+    .sort((left, right) => left.title.localeCompare(right.title));
 }
 
 function sumPhotographersByCategory(events) {
