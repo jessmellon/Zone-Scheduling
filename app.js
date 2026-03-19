@@ -414,6 +414,7 @@ function renderStaffingGroups(dayKey, dayEvents) {
   const totalPhotographers = getTotalPhotographers(dayEvents);
   const dayLimit = getDayLimit(dayKey);
   const dayStatus = getCapacityStatus(totalPhotographers, dayLimit);
+  const displayedZones = getDisplayedZones();
 
   const plannerMarkup = `
     <div class="planner-card ${getCapacityClassName(dayStatus)}">
@@ -436,7 +437,7 @@ function renderStaffingGroups(dayKey, dayEvents) {
   `;
 
   const zoneTotals = buildZoneTotals(dayEvents);
-  const zoneMarkup = ALL_ZONES
+  const zoneMarkup = displayedZones
     .map((category) => {
       const value = zoneTotals.get(category)?.photographers || 0;
       const totalEvents = zoneTotals.get(category)?.schools || 0;
@@ -652,6 +653,14 @@ function buildZoneTotals(events) {
   });
 
   return totals;
+}
+
+function getDisplayedZones() {
+  if (state.viewMode === "staffing" && state.selectedCategory) {
+    return [state.selectedCategory];
+  }
+
+  return ALL_ZONES;
 }
 
 function buildCategoryColors(events) {
