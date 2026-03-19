@@ -308,6 +308,7 @@ function renderCalendar() {
     );
     const cell = document.createElement("div");
     cell.className = "day-cell";
+    const isWeekend = cursor.getDay() === 0 || cursor.getDay() === 6;
 
     if (cursor.getMonth() !== monthStart.getMonth()) {
       cell.classList.add("is-other-month");
@@ -315,6 +316,10 @@ function renderCalendar() {
 
     if (dayKey === todayKey) {
       cell.classList.add("is-today");
+    }
+
+    if (isWeekend) {
+      cell.classList.add("is-weekend");
     }
 
     if (state.viewMode === "staffing") {
@@ -333,7 +338,12 @@ function renderCalendar() {
         : renderEventGroups(dayEvents);
 
     cell.innerHTML = `
-      <div class="day-number">${cursor.getDate()}</div>
+      <div class="day-heading">
+        <div class="day-number">${cursor.getDate()}</div>
+        <div class="day-name">${escapeHtml(
+          cursor.toLocaleDateString(undefined, { weekday: "short" })
+        )}</div>
+      </div>
       <div class="day-groups">${groupsMarkup}</div>
     `;
 

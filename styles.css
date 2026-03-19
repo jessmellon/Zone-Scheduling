@@ -299,6 +299,10 @@ h1 {
   gap: 8px;
 }
 
+.day-cell.is-weekend {
+  background: rgba(186, 167, 255, 0.2);
+}
+
 .day-cell.capacity-warning {
   background: rgba(245, 208, 66, 0.28);
   border-color: rgba(181, 134, 0, 0.45);
@@ -333,6 +337,20 @@ h1 {
 
 .day-number {
   font-size: 1.2rem;
+}
+
+.day-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.day-name {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
 }
 
 .day-groups {
