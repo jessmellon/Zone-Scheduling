@@ -696,6 +696,9 @@ function getCapacityStatus(actual, limit) {
   if (!Number.isFinite(limit)) {
     return "none";
   }
+  if (actual === 0 && limit === 0) {
+    return "none";
+  }
   if (actual > limit) {
     return "critical";
   }
