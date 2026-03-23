@@ -10,6 +10,7 @@ const state = {
   selectedCategory: null,
   selectedStaffingZone: null,
   selectedEventId: null,
+  focusedDayKey: null,
   searchTerm: "",
   viewMode: "staffing",
   categoryColors: new Map(),
@@ -334,6 +335,11 @@ function renderCalendar() {
       cell.classList.add("is-today");
     }
 
+    if (dayKey === state.focusedDayKey) {
+      cell.classList.add("is-focused");
+      cell.dataset.focusedDay = dayKey;
+    }
+
     if (isWeekend) {
       cell.classList.add("is-weekend");
     }
@@ -600,7 +606,11 @@ function renderSearchResults() {
         .sort((left, right) => left.date - right.date)
         .map((event) => {
           return `
-            <div class="search-result-item">
+            <button
+              class="search-result-item"
+              type="button"
+              data-search-event="${escapeHtml(event.id)}"
+            >
               <span class="search-result-date">${escapeHtml(
                 event.date.toLocaleDateString(undefined, {
                   month: "short",
@@ -611,7 +621,7 @@ function renderSearchResults() {
               <span class="search-result-meta">${escapeHtml(
                 [event.category, event.type].filter(Boolean).join(" • ")
               )}</span>
-            </div>
+            </button>
           `;
         })
         .join("");
@@ -626,6 +636,15 @@ function renderSearchResults() {
     .join("");
 
   searchResults.innerHTML = cardsMarkup;
+  searchResults.querySelectorAll("[data-search-event]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const event = state.events.find((item) => item.id === button.dataset.searchEvent);
+      if (!event) {
+        return;
+      }
+      jumpToEventInStaffingView(event);
+    });
+  });
 }
 
 function renderDetailItem(label, value) {
@@ -938,6 +957,25 @@ function clearSelectedNote() {
 
   dayNoteInput.value = "";
   saveSelectedNote();
+}
+
+function jumpToEventInStaffingView(event) {
+  state.viewMode = "staffing";
+  state.selectedCategory = null;
+  state.selectedStaffingZone = null;
+  state.selectedEventId = null;
+  state.currentMonth = startOfMonth(event.date);
+  state.focusedDayKey = formatDateKey(event.date);
+  render();
+  window.requestAnimationFrame(() => {
+    const focusedDay = document.querySelector("[data-focused-day]");
+    if (focusedDay) {
+      focusedDay.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }
+  });
 }
 
 function scrollNotesPanelIntoView() {
