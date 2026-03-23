@@ -75,7 +75,7 @@ h1 {
   margin: 0;
   font-size: clamp(2rem, 4vw, 3.8rem);
   line-height: 0.95;
-  max-width: 10ch;
+  max-width: none;
 }
 
 .hero-copy {
