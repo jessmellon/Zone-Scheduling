@@ -356,6 +356,10 @@ function renderCalendar() {
       cell.classList.add("is-weekend");
     }
 
+    if (isWeekend && allDayEvents.length > 0) {
+      cell.classList.add("is-weekend-booked");
+    }
+
     if (state.viewMode === "staffing") {
       applyCapacityClass(
         cell,

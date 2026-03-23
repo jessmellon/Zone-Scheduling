@@ -395,6 +395,11 @@ button.search-result-item:focus-visible {
   background: rgba(186, 167, 255, 0.2);
 }
 
+.day-cell.is-weekend-booked {
+  background: rgba(220, 38, 38, 0.18);
+  border-color: rgba(185, 28, 28, 0.4);
+}
+
 .day-cell.capacity-warning {
   background: rgba(245, 208, 66, 0.28);
   border-color: rgba(181, 134, 0, 0.45);
