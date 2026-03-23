@@ -81,11 +81,19 @@ async function loadCalendar() {
     state.currentMonth = startOfMonth(state.events[0].date);
     state.categoryColors = buildCategoryColors(state.events);
     lastUpdated.textContent = `Loaded ${state.events.length} calendar entries`;
-    render();
   } catch (error) {
     console.error(error);
     setStatus(`Unable to load the Google Sheet: ${error.message}`);
     lastUpdated.textContent = "Sheet load failed";
+    return;
+  }
+
+  try {
+    render();
+  } catch (error) {
+    console.error(error);
+    setStatus(`Unable to render the page: ${error.message}`);
+    lastUpdated.textContent = "Render failed";
   }
 }
 
