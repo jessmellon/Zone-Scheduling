@@ -30,6 +30,7 @@ const searchInput = document.querySelector("#school-search");
 const searchResults = document.querySelector("#search-results");
 const dayNoteInput = document.querySelector("#day-note-input");
 const noteDateLabel = document.querySelector("#note-date-label");
+const dayNotesPanelAnchor = document.querySelector("#day-notes-panel-anchor");
 
 document.querySelector("#save-note").addEventListener("click", () => {
   saveSelectedNote();
@@ -374,6 +375,7 @@ function renderCalendar() {
       button.addEventListener("click", () => {
         state.selectedNoteDateKey = button.dataset.noteDay;
         renderNotesPanel();
+        scrollNotesPanelIntoView();
       });
     });
 
@@ -936,6 +938,17 @@ function clearSelectedNote() {
 
   dayNoteInput.value = "";
   saveSelectedNote();
+}
+
+function scrollNotesPanelIntoView() {
+  if (!dayNotesPanelAnchor) {
+    return;
+  }
+
+  dayNotesPanelAnchor.scrollIntoView({
+    behavior: "smooth",
+    block: "start",
+  });
 }
 
 function getLimitSaveKey(dateKey, zone) {
