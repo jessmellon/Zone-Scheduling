@@ -2,7 +2,6 @@ const SHEET_GVIZ_URL =
   "https://docs.google.com/spreadsheets/d/1_KPdGkIe-tQrKEFxqAfJL87VvX73aEPuwVW5G_b4zOI/gviz/tq?tqx=out:json&sheet=Copy%20of%20Dates";
 const LIMITS_API_URL =
   "https://script.google.com/macros/s/AKfycby6Jm_C3Z536OSDitlorRvFrNmSFKtqt1TE1-oCSrphTzduvO2DvWa5TWnAe3Up7gu8/exec";
-const NOTES_STORAGE_KEY = "zone-scheduling-day-notes";
 const ALL_ZONES = ["Z1", "Z2", "Z3", "Z4", "Z5"];
 
 const state = {
@@ -15,7 +14,7 @@ const state = {
   viewMode: "staffing",
   categoryColors: new Map(),
   limits: emptyLimits(),
-  notes: loadStoredNotes(),
+  notes: {},
   selectedNoteDateKey: null,
   saveSequence: 0,
   latestSaveByKey: {},
@@ -84,7 +83,7 @@ async function loadCalendar() {
   setStatus("Loading live data from Google Sheets...");
 
   try {
-    const [sheetData, limits] = await Promise.all([loadGvizData(), loadLimits()]);
+    const [sheetData, sharedData] = await Promise.all([loadGvizData(), loadSharedData()]);
     const events = buildEvents(sheetData);
 
     if (!events.length) {
@@ -92,7 +91,8 @@ async function loadCalendar() {
     }
 
     state.events = events.sort((left, right) => left.date - right.date);
-    state.limits = limits;
+    state.limits = sharedData.limits;
+    state.notes = sharedData.notes;
     state.currentMonth = startOfMonth(new Date());
     state.categoryColors = buildCategoryColors(state.events);
     lastUpdated.textContent = `Loaded ${state.events.length} calendar entries`;
@@ -150,7 +150,7 @@ function loadGvizData() {
   });
 }
 
-async function loadLimits() {
+async function loadSharedData() {
   const response = await fetch(LIMITS_API_URL, {
     method: "GET",
   });
@@ -160,7 +160,7 @@ async function loadLimits() {
   }
 
   const payload = await response.json();
-  return normalizeLimitsPayload(payload);
+  return normalizeSharedPayload(payload);
 }
 
 function buildEvents(sheetData) {
@@ -892,37 +892,37 @@ function emptyLimits() {
   return { days: {}, zones: {} };
 }
 
-function loadStoredNotes() {
-  try {
-    const raw = window.localStorage.getItem(NOTES_STORAGE_KEY);
-    if (!raw) {
-      return {};
-    }
-    const parsed = JSON.parse(raw);
-    return parsed && typeof parsed === "object" ? parsed : {};
-  } catch (error) {
-    return {};
-  }
-}
-
-function saveStoredNotes() {
-  window.localStorage.setItem(NOTES_STORAGE_KEY, JSON.stringify(state.notes));
-}
-
-function saveSelectedNote() {
+async function saveSelectedNote() {
   if (!state.selectedNoteDateKey) {
     return;
   }
 
   const value = dayNoteInput.value.trim();
+  const previousValue = state.notes[state.selectedNoteDateKey];
+  const saveKey = getLimitSaveKey(state.selectedNoteDateKey, "NOTE");
+  const saveToken = registerSaveToken(saveKey);
   if (value) {
     state.notes[state.selectedNoteDateKey] = value;
   } else {
     delete state.notes[state.selectedNoteDateKey];
   }
 
-  saveStoredNotes();
   render();
+
+  try {
+    await persistNote(state.selectedNoteDateKey, value);
+  } catch (error) {
+    if (!isLatestSaveToken(saveKey, saveToken)) {
+      return;
+    }
+    if (previousValue === undefined) {
+      delete state.notes[state.selectedNoteDateKey];
+    } else {
+      state.notes[state.selectedNoteDateKey] = previousValue;
+    }
+    setStatus(`Unable to save note: ${error.message}`);
+    render();
+  }
 }
 
 function clearSelectedNote() {
@@ -930,9 +930,8 @@ function clearSelectedNote() {
     return;
   }
 
-  delete state.notes[state.selectedNoteDateKey];
-  saveStoredNotes();
-  render();
+  dayNoteInput.value = "";
+  saveSelectedNote();
 }
 
 function getLimitSaveKey(dateKey, zone) {
@@ -949,10 +948,14 @@ function isLatestSaveToken(saveKey, saveToken) {
   return state.latestSaveByKey[saveKey] === saveToken;
 }
 
-function normalizeLimitsPayload(payload) {
-  const normalized = emptyLimits();
+function normalizeSharedPayload(payload) {
+  const normalized = {
+    limits: emptyLimits(),
+    notes: {},
+  };
   const dayEntries = Object.entries(payload.days || {});
   const zoneEntries = Object.entries(payload.zones || {});
+  const noteEntries = Object.entries(payload.notes || {});
 
   dayEntries.forEach(([rawDateKey, value]) => {
     const dateKey = normalizeDateKey(rawDateKey);
@@ -961,7 +964,7 @@ function normalizeLimitsPayload(payload) {
     }
     const parsedValue = Number(value);
     if (Number.isFinite(parsedValue)) {
-      normalized.days[dateKey] = parsedValue;
+      normalized.limits.days[dateKey] = parsedValue;
     }
   });
 
@@ -976,11 +979,22 @@ function normalizeLimitsPayload(payload) {
       if (!Number.isFinite(parsedValue)) {
         return;
       }
-      if (!normalized.zones[dateKey]) {
-        normalized.zones[dateKey] = {};
+      if (!normalized.limits.zones[dateKey]) {
+        normalized.limits.zones[dateKey] = {};
       }
-      normalized.zones[dateKey][zone] = parsedValue;
+      normalized.limits.zones[dateKey][zone] = parsedValue;
     });
+  });
+
+  noteEntries.forEach(([rawDateKey, note]) => {
+    const dateKey = normalizeDateKey(rawDateKey);
+    if (!dateKey) {
+      return;
+    }
+    const normalizedNote = String(note || "").trim();
+    if (normalizedNote) {
+      normalized.notes[dateKey] = normalizedNote;
+    }
   });
 
   return normalized;
@@ -1014,6 +1028,29 @@ async function persistLimit(dateKey, zone, limit) {
       dateKey,
       zone,
       limit,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`save failed with status ${response.status}`);
+  }
+
+  const payload = await response.json();
+  if (!payload.ok) {
+    throw new Error(payload.error || "unknown save error");
+  }
+}
+
+async function persistNote(dateKey, note) {
+  const response = await fetch(LIMITS_API_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "text/plain;charset=utf-8",
+    },
+    body: JSON.stringify({
+      dateKey,
+      zone: "NOTE",
+      note: note || "",
     }),
   });
 
