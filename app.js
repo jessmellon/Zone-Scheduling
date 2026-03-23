@@ -559,7 +559,7 @@ function renderNotesPanel() {
     return;
   }
 
-  const selectedDate = new Date(state.selectedNoteDateKey);
+  const selectedDate = parseDateKey(state.selectedNoteDateKey);
   noteDateLabel.textContent = selectedDate.toLocaleDateString(undefined, {
     weekday: "long",
     month: "long",
@@ -1016,6 +1016,17 @@ function normalizeDateKey(rawDateKey) {
   }
 
   return formatDateKey(parsed);
+}
+
+function parseDateKey(dateKey) {
+  const match = String(dateKey).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (match) {
+    const [, year, month, day] = match;
+    return new Date(Number(year), Number(month) - 1, Number(day));
+  }
+
+  const parsed = new Date(dateKey);
+  return Number.isNaN(parsed.getTime()) ? new Date() : parsed;
 }
 
 async function persistLimit(dateKey, zone, limit) {
