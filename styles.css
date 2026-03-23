@@ -263,6 +263,12 @@ button.search-result-item:focus-visible {
   font-size: 0.9rem;
 }
 
+.current-note-meta {
+  margin-bottom: 10px;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
 .note-input {
   width: 100%;
   min-height: 110px;
