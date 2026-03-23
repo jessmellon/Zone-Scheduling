@@ -11,7 +11,7 @@ const state = {
   selectedStaffingZone: null,
   selectedEventId: null,
   searchTerm: "",
-  viewMode: "events",
+  viewMode: "staffing",
   categoryColors: new Map(),
   limits: emptyLimits(),
 };
