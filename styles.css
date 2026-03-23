@@ -134,6 +134,11 @@ h1 {
   padding: 20px;
 }
 
+.panel.has-note {
+  background: rgba(255, 232, 121, 0.24);
+  border-color: rgba(211, 171, 19, 0.45);
+}
+
 .panel-row,
 .calendar-toolbar,
 .month-controls {

@@ -32,6 +32,7 @@ const searchResults = document.querySelector("#search-results");
 const dayNoteInput = document.querySelector("#day-note-input");
 const noteDateLabel = document.querySelector("#note-date-label");
 const dayNotesPanelAnchor = document.querySelector("#day-notes-panel-anchor");
+const dayNotesPanel = document.querySelector("#day-notes-panel");
 
 document.querySelector("#save-note").addEventListener("click", () => {
   saveSelectedNote();
@@ -568,6 +569,7 @@ function renderNotesPanel() {
     noteDateLabel.textContent = "Select a day to add a note.";
     dayNoteInput.value = "";
     dayNoteInput.disabled = true;
+    dayNotesPanel.classList.remove("has-note");
     return;
   }
 
@@ -579,7 +581,9 @@ function renderNotesPanel() {
     year: "numeric",
   });
   dayNoteInput.disabled = false;
-  dayNoteInput.value = state.notes[state.selectedNoteDateKey] || "";
+  const noteValue = state.notes[state.selectedNoteDateKey] || "";
+  dayNoteInput.value = noteValue;
+  dayNotesPanel.classList.toggle("has-note", Boolean(noteValue.trim()));
 }
 
 function renderSearchResults() {
