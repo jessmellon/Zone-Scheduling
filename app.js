@@ -426,7 +426,7 @@ function renderStaffingGroups(dayKey, dayEvents) {
       </label>
       <div class="planner-row">
         <span class="planner-title">Day total</span>
-        <span class="planner-total">${totalPhotographers} scheduled</span>
+        <span class="planner-total"><strong>${totalPhotographers}</strong></span>
       </div>
     </div>
   `;
