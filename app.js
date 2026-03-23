@@ -1,7 +1,7 @@
 const SHEET_GVIZ_URL =
   "https://docs.google.com/spreadsheets/d/1_KPdGkIe-tQrKEFxqAfJL87VvX73aEPuwVW5G_b4zOI/gviz/tq?tqx=out:json&sheet=Copy%20of%20Dates";
 const LIMITS_API_URL =
-  "https://script.google.com/macros/s/AKfycbyXnGTEZBLapvrvjfk7Py4C80BmnnzqPIcM-bEp8Rmd1fcjW2fbCz5-SepE-rV473k/exec";
+  "https://script.google.com/macros/s/AKfycbyx3KKRd4QBKxyNLknC26rWI_jtTpU4CouB_HEhHdYAccm9Ne9kqIKC407eEDClKgtW/exec";
 const ALL_ZONES = ["Z1", "Z2", "Z3", "Z4", "Z5"];
 
 const state = {
@@ -16,6 +16,7 @@ const state = {
   categoryColors: new Map(),
   limits: emptyLimits(),
   notes: {},
+  noteHistory: {},
   selectedNoteDateKey: null,
   saveSequence: 0,
   latestSaveByKey: {},
@@ -34,6 +35,7 @@ const noteDateLabel = document.querySelector("#note-date-label");
 const dayNotesPanelAnchor = document.querySelector("#day-notes-panel-anchor");
 const dayNotesPanel = document.querySelector("#day-notes-panel");
 const saveNoteButton = document.querySelector("#save-note");
+const noteHistory = document.querySelector("#note-history");
 
 document.querySelector("#save-note").addEventListener("click", () => {
   saveSelectedNote();
@@ -101,6 +103,7 @@ async function loadCalendar() {
     state.events = events.sort((left, right) => left.date - right.date);
     state.limits = sharedData.limits;
     state.notes = sharedData.notes;
+    state.noteHistory = sharedData.noteHistory;
     state.currentMonth = startOfMonth(new Date());
     state.categoryColors = buildCategoryColors(state.events);
     lastUpdated.textContent = `Loaded ${state.events.length} calendar entries`;
@@ -578,6 +581,7 @@ function renderNotesPanel() {
     dayNoteInput.value = "";
     dayNoteInput.disabled = true;
     dayNotesPanel.classList.remove("has-note");
+    noteHistory.innerHTML = '<div class="note-history-empty">Select a day to view note history.</div>';
     updateNoteSaveButtonState();
     return;
   }
@@ -593,7 +597,36 @@ function renderNotesPanel() {
   const noteValue = state.notes[state.selectedNoteDateKey] || "";
   dayNoteInput.value = noteValue;
   dayNotesPanel.classList.toggle("has-note", Boolean(noteValue.trim()));
+  renderNoteHistory(state.selectedNoteDateKey);
   updateNoteSaveButtonState();
+}
+
+function renderNoteHistory(dateKey) {
+  const entries = state.noteHistory[dateKey] || [];
+
+  if (!entries.length) {
+    noteHistory.innerHTML = `
+      <p class="note-history-title">History</p>
+      <div class="note-history-empty">No previous notes for this day.</div>
+    `;
+    return;
+  }
+
+  const itemsMarkup = entries
+    .map((entry) => {
+      return `
+        <div class="note-history-item">
+          <span class="note-history-meta">${escapeHtml(formatHistoryMeta(entry))}</span>
+          <p class="note-history-text">${escapeHtml(entry.note || "")}</p>
+        </div>
+      `;
+    })
+    .join("");
+
+  noteHistory.innerHTML = `
+    <p class="note-history-title">History</p>
+    ${itemsMarkup}
+  `;
 }
 
 function renderSearchResults() {
@@ -957,13 +990,10 @@ async function saveSelectedNote() {
 
   const value = dayNoteInput.value.trim();
   const previousValue = state.notes[state.selectedNoteDateKey];
+  const previousHistory = cloneHistoryEntries(state.noteHistory[state.selectedNoteDateKey]);
   const saveKey = getLimitSaveKey(state.selectedNoteDateKey, "NOTE");
   const saveToken = registerSaveToken(saveKey);
-  if (value) {
-    state.notes[state.selectedNoteDateKey] = value;
-  } else {
-    delete state.notes[state.selectedNoteDateKey];
-  }
+  updateLocalNoteState(state.selectedNoteDateKey, previousValue, value);
 
   render();
 
@@ -973,11 +1003,7 @@ async function saveSelectedNote() {
     if (!isLatestSaveToken(saveKey, saveToken)) {
       return;
     }
-    if (previousValue === undefined) {
-      delete state.notes[state.selectedNoteDateKey];
-    } else {
-      state.notes[state.selectedNoteDateKey] = previousValue;
-    }
+    restoreLocalNoteState(state.selectedNoteDateKey, previousValue, previousHistory);
     setStatus(`Unable to save note: ${error.message}`);
     render();
   }
@@ -1051,10 +1077,12 @@ function normalizeSharedPayload(payload) {
   const normalized = {
     limits: emptyLimits(),
     notes: {},
+    noteHistory: {},
   };
   const dayEntries = Object.entries(payload.days || {});
   const zoneEntries = Object.entries(payload.zones || {});
   const noteEntries = Object.entries(payload.notes || {});
+  const noteHistoryEntries = Object.entries(payload.noteHistory || {});
 
   dayEntries.forEach(([rawDateKey, value]) => {
     const dateKey = normalizeDateKey(rawDateKey);
@@ -1094,6 +1122,21 @@ function normalizeSharedPayload(payload) {
     if (normalizedNote) {
       normalized.notes[dateKey] = normalizedNote;
     }
+  });
+
+  noteHistoryEntries.forEach(([rawDateKey, entries]) => {
+    const dateKey = normalizeDateKey(rawDateKey);
+    if (!dateKey || !Array.isArray(entries)) {
+      return;
+    }
+
+    normalized.noteHistory[dateKey] = entries
+      .map((entry) => ({
+        note: String(entry.note || "").trim(),
+        status: String(entry.status || "").trim().toUpperCase(),
+        updatedAt: String(entry.updatedAt || "").trim(),
+      }))
+      .filter((entry) => entry.note);
   });
 
   return normalized;
@@ -1172,6 +1215,74 @@ async function persistNote(dateKey, note) {
   if (!payload.ok) {
     throw new Error(payload.error || "unknown save error");
   }
+}
+
+function updateLocalNoteState(dateKey, previousValue, nextValue) {
+  if (previousValue && previousValue !== nextValue) {
+    appendNoteHistoryEntry(dateKey, {
+      note: previousValue,
+      status: "ARCHIVED",
+      updatedAt: new Date().toISOString(),
+    });
+  }
+
+  if (nextValue) {
+    state.notes[dateKey] = nextValue;
+  } else {
+    delete state.notes[dateKey];
+  }
+}
+
+function restoreLocalNoteState(dateKey, previousValue, previousHistory) {
+  if (previousValue === undefined) {
+    delete state.notes[dateKey];
+  } else {
+    state.notes[dateKey] = previousValue;
+  }
+
+  if (previousHistory) {
+    state.noteHistory[dateKey] = previousHistory;
+  } else {
+    delete state.noteHistory[dateKey];
+  }
+}
+
+function appendNoteHistoryEntry(dateKey, entry) {
+  if (!state.noteHistory[dateKey]) {
+    state.noteHistory[dateKey] = [];
+  }
+
+  state.noteHistory[dateKey] = [entry, ...state.noteHistory[dateKey]];
+}
+
+function cloneHistoryEntries(entries) {
+  if (!Array.isArray(entries) || !entries.length) {
+    return null;
+  }
+
+  return entries.map((entry) => ({ ...entry }));
+}
+
+function formatHistoryMeta(entry) {
+  const parts = [];
+  if (entry.status) {
+    parts.push(entry.status === "ARCHIVED" ? "Cleared" : entry.status);
+  }
+  if (entry.updatedAt) {
+    const parsed = new Date(entry.updatedAt);
+    if (!Number.isNaN(parsed.getTime())) {
+      parts.push(
+        parsed.toLocaleString(undefined, {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+          hour: "numeric",
+          minute: "2-digit",
+        })
+      );
+    }
+  }
+  return parts.join(" • ") || "Previous note";
 }
 
 function setStatus(message) {
