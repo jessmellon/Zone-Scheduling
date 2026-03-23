@@ -304,6 +304,7 @@ function renderCalendar() {
   const gridStart = startOfWeek(monthStart);
   const gridEnd = endOfWeek(monthEnd);
   const visibleEvents = getVisibleEvents();
+  const allEvents = state.events;
   const todayKey = formatDateKey(new Date());
 
   calendarGrid.innerHTML = "";
@@ -315,6 +316,9 @@ function renderCalendar() {
   ) {
     const dayKey = formatDateKey(cursor);
     const dayEvents = visibleEvents.filter(
+      (event) => formatDateKey(event.date) === dayKey
+    );
+    const allDayEvents = allEvents.filter(
       (event) => formatDateKey(event.date) === dayKey
     );
     const cell = document.createElement("div");
@@ -337,7 +341,7 @@ function renderCalendar() {
       applyCapacityClass(
         cell,
         getCapacityStatus(
-          getTotalPhotographers(dayEvents),
+          getTotalPhotographers(allDayEvents),
           getDayLimit(dayKey)
         )
       );
@@ -345,7 +349,7 @@ function renderCalendar() {
 
     const groupsMarkup =
       state.viewMode === "staffing"
-        ? renderStaffingGroups(dayKey, dayEvents)
+        ? renderStaffingGroups(dayKey, allDayEvents)
         : renderEventGroups(dayEvents);
     const hasNote = hasDayNote(dayKey);
 
