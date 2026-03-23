@@ -80,7 +80,7 @@ async function loadCalendar() {
 
     state.events = events.sort((left, right) => left.date - right.date);
     state.limits = limits;
-    state.currentMonth = startOfMonth(state.events[0].date);
+    state.currentMonth = startOfMonth(new Date());
     state.categoryColors = buildCategoryColors(state.events);
     lastUpdated.textContent = `Loaded ${state.events.length} calendar entries`;
   } catch (error) {
