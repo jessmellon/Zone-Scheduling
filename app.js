@@ -14,6 +14,8 @@ const state = {
   viewMode: "staffing",
   categoryColors: new Map(),
   limits: emptyLimits(),
+  saveSequence: 0,
+  latestSaveByKey: {},
 };
 
 const monthLabel = document.querySelector("#month-label");
@@ -352,16 +354,14 @@ function renderCalendar() {
       });
     } else {
       cell.querySelectorAll("[data-day-limit]").forEach((input) => {
-        input.addEventListener("change", async (event) => {
-          await setDayLimit(dayKey, event.target.value);
-          render();
+        input.addEventListener("change", (event) => {
+          setDayLimit(dayKey, event.target.value);
         });
       });
 
       cell.querySelectorAll("[data-zone-limit]").forEach((input) => {
-        input.addEventListener("change", async (event) => {
-          await setZoneLimit(dayKey, event.target.dataset.zone, event.target.value);
-          render();
+        input.addEventListener("change", (event) => {
+          setZoneLimit(dayKey, event.target.dataset.zone, event.target.value);
         });
       });
     }
@@ -749,21 +749,28 @@ async function setDayLimit(dayKey, rawValue) {
 
   const normalized = normalizeLimitInput(rawValue);
   const previousValue = state.limits.days[dayKey];
+  const saveKey = getLimitSaveKey(dayKey, "DAY");
+  const saveToken = registerSaveToken(saveKey);
   if (normalized === null) {
     delete state.limits.days[dayKey];
   } else {
     state.limits.days[dayKey] = normalized;
   }
+  render();
 
   try {
     await persistLimit(dayKey, "DAY", normalized);
   } catch (error) {
+    if (!isLatestSaveToken(saveKey, saveToken)) {
+      return;
+    }
     if (previousValue === undefined) {
       delete state.limits.days[dayKey];
     } else {
       state.limits.days[dayKey] = previousValue;
     }
     setStatus(`Unable to save daily limit: ${error.message}`);
+    render();
   }
 }
 
@@ -778,6 +785,8 @@ async function setZoneLimit(dayKey, zone, rawValue) {
 
   const normalized = normalizeLimitInput(rawValue);
   const previousValue = state.limits.zones[dayKey][zone];
+  const saveKey = getLimitSaveKey(dayKey, zone);
+  const saveToken = registerSaveToken(saveKey);
   if (normalized === null) {
     delete state.limits.zones[dayKey][zone];
     if (!Object.keys(state.limits.zones[dayKey]).length) {
@@ -786,10 +795,14 @@ async function setZoneLimit(dayKey, zone, rawValue) {
   } else {
     state.limits.zones[dayKey][zone] = normalized;
   }
+  render();
 
   try {
     await persistLimit(dayKey, zone, normalized);
   } catch (error) {
+    if (!isLatestSaveToken(saveKey, saveToken)) {
+      return;
+    }
     if (!state.limits.zones[dayKey]) {
       state.limits.zones[dayKey] = {};
     }
@@ -802,6 +815,7 @@ async function setZoneLimit(dayKey, zone, rawValue) {
       state.limits.zones[dayKey][zone] = previousValue;
     }
     setStatus(`Unable to save zone limit: ${error.message}`);
+    render();
   }
 }
 
@@ -824,6 +838,20 @@ function parseLimitValue(value) {
 
 function emptyLimits() {
   return { days: {}, zones: {} };
+}
+
+function getLimitSaveKey(dateKey, zone) {
+  return `${dateKey}::${zone}`;
+}
+
+function registerSaveToken(saveKey) {
+  state.saveSequence += 1;
+  state.latestSaveByKey[saveKey] = state.saveSequence;
+  return state.saveSequence;
+}
+
+function isLatestSaveToken(saveKey, saveToken) {
+  return state.latestSaveByKey[saveKey] === saveToken;
 }
 
 function normalizeLimitsPayload(payload) {
