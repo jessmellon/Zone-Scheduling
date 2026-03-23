@@ -18,7 +18,6 @@ const state = {
 
 const monthLabel = document.querySelector("#month-label");
 const calendarGrid = document.querySelector("#calendar-grid");
-const categorySummary = document.querySelector("#category-summary");
 const filterList = document.querySelector("#filter-list");
 const selectionDetails = document.querySelector("#selection-details");
 const statusBanner = document.querySelector("#status-banner");
@@ -197,7 +196,6 @@ function render() {
 
   renderViewSwitch();
   renderHeader();
-  renderSummary();
   renderFilters();
   renderCalendar();
   renderDetails();
@@ -240,26 +238,6 @@ function renderHeader() {
       state.selectedCategory ? ` for ${state.selectedCategory}` : ""
     }`
   );
-}
-
-function renderSummary() {
-  const counts =
-    state.viewMode === "staffing"
-      ? sumPhotographersByCategory(state.events)
-      : countByCategory(state.events);
-
-  categorySummary.innerHTML = "";
-  counts.forEach(({ category, value }) => {
-    const item = document.createElement("div");
-    item.className = "summary-item";
-    item.innerHTML = `
-      <span><span class="dot" style="background:${getCategoryColor(category)}"></span> ${escapeHtml(
-        category
-      )}</span>
-      <span class="summary-count">${value}</span>
-    `;
-    categorySummary.appendChild(item);
-  });
 }
 
 function renderFilters() {
