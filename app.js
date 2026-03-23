@@ -413,10 +413,6 @@ function renderStaffingGroups(dayKey, dayEvents) {
 
   const plannerMarkup = `
     <div class="planner-card planner-total-card ${getCapacityClassName(dayStatus)}">
-      <div class="planner-row">
-        <span class="planner-title">Day total</span>
-        <span class="planner-total">${totalPhotographers} scheduled</span>
-      </div>
       <label class="limit-field">
         <span class="limit-label">Daily limit</span>
         <input
@@ -428,6 +424,10 @@ function renderStaffingGroups(dayKey, dayEvents) {
           data-day-limit="true"
         />
       </label>
+      <div class="planner-row">
+        <span class="planner-title">Day total</span>
+        <span class="planner-total">${totalPhotographers} scheduled</span>
+      </div>
     </div>
   `;
 
@@ -445,12 +445,6 @@ function renderStaffingGroups(dayKey, dayEvents) {
             class="event-pill summary-pill ${getCapacityClassName(zoneStatus)}"
             style="border-left-color:${getCategoryColor(category)}"
           >
-            <span class="event-title">${value} Photog${
-              value === 1 ? "" : "s"
-            }</span>
-            <span class="event-meta">${totalEvents} school${
-              totalEvents === 1 ? "" : "s"
-            }</span>
             <label class="limit-field zone-limit-field">
               <span class="limit-label">Limit</span>
               <input
@@ -463,6 +457,12 @@ function renderStaffingGroups(dayKey, dayEvents) {
                 data-zone="${escapeHtml(category)}"
               />
             </label>
+            <span class="event-title">${value} Photog${
+              value === 1 ? "" : "s"
+            }</span>
+            <span class="event-meta">${totalEvents} school${
+              totalEvents === 1 ? "" : "s"
+            }</span>
           </div>
         </div>
       `;
