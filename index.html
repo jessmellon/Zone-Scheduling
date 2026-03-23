@@ -51,6 +51,27 @@
           </section>
 
           <section class="panel">
+            <div class="panel-row">
+              <p class="panel-label">Day Notes</p>
+              <button id="clear-note" class="ghost-button" type="button">
+                Clear
+              </button>
+            </div>
+            <div id="note-date-label" class="note-date-label">
+              Select a day to add a note.
+            </div>
+            <textarea
+              id="day-note-input"
+              class="note-input"
+              rows="5"
+              placeholder="Add notes for this date"
+            ></textarea>
+            <button id="save-note" class="primary-button note-save" type="button">
+              Save note
+            </button>
+          </section>
+
+          <section class="panel">
             <p class="panel-label">School Search</p>
             <input
               id="school-search"

@@ -2,6 +2,7 @@ const SHEET_GVIZ_URL =
   "https://docs.google.com/spreadsheets/d/1_KPdGkIe-tQrKEFxqAfJL87VvX73aEPuwVW5G_b4zOI/gviz/tq?tqx=out:json&sheet=Copy%20of%20Dates";
 const LIMITS_API_URL =
   "https://script.google.com/macros/s/AKfycby6Jm_C3Z536OSDitlorRvFrNmSFKtqt1TE1-oCSrphTzduvO2DvWa5TWnAe3Up7gu8/exec";
+const NOTES_STORAGE_KEY = "zone-scheduling-day-notes";
 const ALL_ZONES = ["Z1", "Z2", "Z3", "Z4", "Z5"];
 
 const state = {
@@ -14,6 +15,8 @@ const state = {
   viewMode: "staffing",
   categoryColors: new Map(),
   limits: emptyLimits(),
+  notes: loadStoredNotes(),
+  selectedNoteDateKey: null,
   saveSequence: 0,
   latestSaveByKey: {},
 };
@@ -26,6 +29,16 @@ const statusBanner = document.querySelector("#status-banner");
 const lastUpdated = document.querySelector("#last-updated");
 const searchInput = document.querySelector("#school-search");
 const searchResults = document.querySelector("#search-results");
+const dayNoteInput = document.querySelector("#day-note-input");
+const noteDateLabel = document.querySelector("#note-date-label");
+
+document.querySelector("#save-note").addEventListener("click", () => {
+  saveSelectedNote();
+});
+
+document.querySelector("#clear-note").addEventListener("click", () => {
+  clearSelectedNote();
+});
 
 document.querySelector("#prev-month").addEventListener("click", () => {
   state.currentMonth = addMonths(state.currentMonth, -1);
@@ -209,6 +222,7 @@ function render() {
   renderFilters();
   renderCalendar();
   renderDetails();
+  renderNotesPanel();
   renderSearchResults();
 }
 
@@ -333,16 +347,31 @@ function renderCalendar() {
       state.viewMode === "staffing"
         ? renderStaffingGroups(dayKey, dayEvents)
         : renderEventGroups(dayEvents);
+    const hasNote = hasDayNote(dayKey);
 
     cell.innerHTML = `
       <div class="day-heading">
-        <div class="day-number">${cursor.getDate()}</div>
+        <button
+          class="day-note-button"
+          type="button"
+          data-note-day="${dayKey}"
+          aria-label="Open note for ${escapeHtml(dayKey)}"
+        >
+          <div class="day-number${hasNote ? " has-note" : ""}">${cursor.getDate()}</div>
+        </button>
         <div class="day-name">${escapeHtml(
           cursor.toLocaleDateString(undefined, { weekday: "short" })
         )}</div>
       </div>
       <div class="day-groups">${groupsMarkup}</div>
     `;
+
+    cell.querySelectorAll("[data-note-day]").forEach((button) => {
+      button.addEventListener("click", () => {
+        state.selectedNoteDateKey = button.dataset.noteDay;
+        renderNotesPanel();
+      });
+    });
 
     if (state.viewMode === "events") {
       cell.querySelectorAll("[data-event-id]").forEach((button) => {
@@ -520,6 +549,25 @@ function renderDetails() {
       ${renderDetailItem("Photographers", event.photographers)}
     </div>
   `;
+}
+
+function renderNotesPanel() {
+  if (!state.selectedNoteDateKey) {
+    noteDateLabel.textContent = "Select a day to add a note.";
+    dayNoteInput.value = "";
+    dayNoteInput.disabled = true;
+    return;
+  }
+
+  const selectedDate = new Date(state.selectedNoteDateKey);
+  noteDateLabel.textContent = selectedDate.toLocaleDateString(undefined, {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+  dayNoteInput.disabled = false;
+  dayNoteInput.value = state.notes[state.selectedNoteDateKey] || "";
 }
 
 function renderSearchResults() {
@@ -737,6 +785,10 @@ function getDayLimit(dayKey) {
   return parseLimitValue(value);
 }
 
+function hasDayNote(dayKey) {
+  return Boolean((state.notes[dayKey] || "").trim());
+}
+
 function getZoneLimit(dayKey, zone) {
   const value = state.limits.zones?.[dayKey]?.[zone];
   return parseLimitValue(value);
@@ -838,6 +890,49 @@ function parseLimitValue(value) {
 
 function emptyLimits() {
   return { days: {}, zones: {} };
+}
+
+function loadStoredNotes() {
+  try {
+    const raw = window.localStorage.getItem(NOTES_STORAGE_KEY);
+    if (!raw) {
+      return {};
+    }
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch (error) {
+    return {};
+  }
+}
+
+function saveStoredNotes() {
+  window.localStorage.setItem(NOTES_STORAGE_KEY, JSON.stringify(state.notes));
+}
+
+function saveSelectedNote() {
+  if (!state.selectedNoteDateKey) {
+    return;
+  }
+
+  const value = dayNoteInput.value.trim();
+  if (value) {
+    state.notes[state.selectedNoteDateKey] = value;
+  } else {
+    delete state.notes[state.selectedNoteDateKey];
+  }
+
+  saveStoredNotes();
+  render();
+}
+
+function clearSelectedNote() {
+  if (!state.selectedNoteDateKey) {
+    return;
+  }
+
+  delete state.notes[state.selectedNoteDateKey];
+  saveStoredNotes();
+  render();
 }
 
 function getLimitSaveKey(dateKey, zone) {
