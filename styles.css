@@ -314,8 +314,8 @@ h1 {
 }
 
 .day-cell.capacity-critical {
-  background: rgba(127, 29, 29, 0.28);
-  border-color: rgba(127, 29, 29, 0.62);
+  background: rgba(70, 8, 8, 0.45);
+  border-color: rgba(70, 8, 8, 0.82);
   color: #fff8f8;
 }
 
@@ -417,7 +417,7 @@ h1 {
 
 .summary-pill.capacity-critical,
 .planner-card.capacity-critical {
-  background: rgba(127, 29, 29, 0.78);
+  background: rgba(70, 8, 8, 0.92);
   color: #fff8f8;
 }
 
