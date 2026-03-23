@@ -428,6 +428,12 @@ h1 {
   background: rgba(255, 255, 255, 0.88);
 }
 
+.planner-total-card {
+  background: #111111;
+  color: #ffffff;
+  border-color: rgba(17, 17, 17, 0.9);
+}
+
 .planner-row {
   display: flex;
   align-items: center;
@@ -439,6 +445,17 @@ h1 {
 .planner-title,
 .planner-total {
   font-size: 0.72rem;
+}
+
+.planner-total-card .limit-label,
+.planner-total-card .planner-title,
+.planner-total-card .planner-total {
+  color: #ffffff;
+}
+
+.planner-total-card .limit-input {
+  background: rgba(255, 255, 255, 0.98);
+  color: #111111;
 }
 
 .planner-title {
