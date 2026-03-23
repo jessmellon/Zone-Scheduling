@@ -455,9 +455,15 @@ h1 {
   font-size: 0.72rem;
 }
 
+.planner-total-number {
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
 .planner-total-card .limit-label,
 .planner-total-card .planner-title,
-.planner-total-card .planner-total {
+.planner-total-card .planner-total,
+.planner-total-card .planner-total-number {
   color: #ffffff;
 }
 
