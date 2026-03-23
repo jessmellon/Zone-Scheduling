@@ -619,6 +619,39 @@ button.search-result-item:focus-visible {
   line-height: 1.5;
 }
 
+.details-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.legend-swatch {
+  width: 18px;
+  height: 18px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  flex: 0 0 auto;
+}
+
+.legend-swatch.warning {
+  background: rgba(245, 208, 66, 0.45);
+}
+
+.legend-swatch.danger {
+  background: rgba(220, 38, 38, 0.3);
+}
+
+.legend-swatch.critical {
+  background: rgba(70, 8, 8, 0.92);
+  border-color: rgba(70, 8, 8, 0.92);
+}
+
 .details-card h3 {
   margin: 0 0 6px;
   color: var(--text);

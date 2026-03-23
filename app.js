@@ -529,12 +529,12 @@ function renderDetails() {
       </p>
       <div class="detail-grid">
         ${renderDetailItem("Basis", "Sum of Photographers column")}
-        ${renderDetailItem("Warnings", "Yellow = within 2, red = at limit, dark red = over")}
         ${renderDetailItem(
           "Filter",
           state.selectedStaffingZone || "All zones"
         )}
       </div>
+      ${renderColorLegend()}
     `;
     return;
   }
@@ -542,9 +542,12 @@ function renderDetails() {
   const event = state.events.find((item) => item.id === state.selectedEventId);
 
   if (!event) {
-    selectionDetails.className = "details-empty";
-    selectionDetails.textContent =
-      "Select an event on the calendar to inspect it.";
+    selectionDetails.className = "details-card";
+    selectionDetails.innerHTML = `
+      <h3>Details</h3>
+      <p>Select an event on the calendar to inspect it.</p>
+      ${renderColorLegend()}
+    `;
     return;
   }
 
@@ -663,6 +666,25 @@ function renderDetailItem(label, value) {
     <div class="detail-item">
       <strong>${escapeHtml(label)}</strong>
       <span>${escapeHtml(value || "Not provided")}</span>
+    </div>
+  `;
+}
+
+function renderColorLegend() {
+  return `
+    <div class="details-legend">
+      <div class="legend-item">
+        <span class="legend-swatch warning"></span>
+        <span>Within 2 below the limit</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-swatch danger"></span>
+        <span>At the limit</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-swatch critical"></span>
+        <span>Over the limit</span>
+      </div>
     </div>
   `;
 }
