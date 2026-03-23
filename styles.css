@@ -670,6 +670,12 @@ button.search-result-item:focus-visible {
   background: var(--primary-strong);
 }
 
+.primary-button:disabled {
+  background: #a7afa8;
+  color: #eef2ee;
+  cursor: default;
+}
+
 @media (max-width: 1100px) {
   .layout {
     grid-template-columns: 1fr;

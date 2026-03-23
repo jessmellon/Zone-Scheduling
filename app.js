@@ -33,6 +33,7 @@ const dayNoteInput = document.querySelector("#day-note-input");
 const noteDateLabel = document.querySelector("#note-date-label");
 const dayNotesPanelAnchor = document.querySelector("#day-notes-panel-anchor");
 const dayNotesPanel = document.querySelector("#day-notes-panel");
+const saveNoteButton = document.querySelector("#save-note");
 
 document.querySelector("#save-note").addEventListener("click", () => {
   saveSelectedNote();
@@ -78,6 +79,10 @@ document.querySelector("#staffing-view-button").addEventListener("click", () => 
 searchInput.addEventListener("input", (event) => {
   state.searchTerm = event.target.value.trim();
   renderSearchResults();
+});
+
+dayNoteInput.addEventListener("input", () => {
+  updateNoteSaveButtonState();
 });
 
 loadCalendar();
@@ -570,6 +575,7 @@ function renderNotesPanel() {
     dayNoteInput.value = "";
     dayNoteInput.disabled = true;
     dayNotesPanel.classList.remove("has-note");
+    updateNoteSaveButtonState();
     return;
   }
 
@@ -584,6 +590,7 @@ function renderNotesPanel() {
   const noteValue = state.notes[state.selectedNoteDateKey] || "";
   dayNoteInput.value = noteValue;
   dayNotesPanel.classList.toggle("has-note", Boolean(noteValue.trim()));
+  updateNoteSaveButtonState();
 }
 
 function renderSearchResults() {
@@ -961,6 +968,17 @@ function clearSelectedNote() {
 
   dayNoteInput.value = "";
   saveSelectedNote();
+}
+
+function updateNoteSaveButtonState() {
+  if (!state.selectedNoteDateKey || dayNoteInput.disabled) {
+    saveNoteButton.disabled = true;
+    return;
+  }
+
+  const currentValue = dayNoteInput.value.trim();
+  const savedValue = (state.notes[state.selectedNoteDateKey] || "").trim();
+  saveNoteButton.disabled = currentValue === savedValue;
 }
 
 function jumpToEventInStaffingView(event) {
