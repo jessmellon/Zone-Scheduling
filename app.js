@@ -1,7 +1,7 @@
 const SHEET_GVIZ_URL =
   "https://docs.google.com/spreadsheets/d/1_KPdGkIe-tQrKEFxqAfJL87VvX73aEPuwVW5G_b4zOI/gviz/tq?tqx=out:json&sheet=Copy%20of%20Dates";
 const LIMITS_API_URL =
-  "https://script.google.com/macros/s/AKfycbzw7HPDOHIG4byTezffmbCrR2VVDysNdjGqiFkpbn0EiDRSlCoi2FPNWE4d6h5IWMYS/exec";
+  "https://script.google.com/macros/s/AKfycbze-FPNgPdFFN3yRQaFkTmpoqTWaRzK_u159hTWi0Rq896gQMSXNB4gIsPLnmJ4yT-Y/exec";
 const ALL_ZONES = ["Z1", "Z2", "Z3", "Z4", "Z5"];
 
 const state = {
@@ -18,6 +18,7 @@ const state = {
   notes: {},
   noteMeta: {},
   noteHistory: {},
+  dateHistory: {},
   selectedNoteDateKey: null,
   saveSequence: 0,
   latestSaveByKey: {},
@@ -107,6 +108,7 @@ async function loadCalendar() {
     state.notes = sharedData.notes;
     state.noteMeta = sharedData.noteMeta;
     state.noteHistory = sharedData.noteHistory;
+    state.dateHistory = sharedData.dateHistory;
     state.currentMonth = startOfMonth(new Date());
     state.categoryColors = buildCategoryColors(state.events);
     lastUpdated.textContent = `Loaded ${state.events.length} calendar entries`;
@@ -658,6 +660,7 @@ function renderSearchResults() {
   const grouped = groupEventsBySchool(matchingEvents);
   const cardsMarkup = grouped
     .map(({ schoolName, events }) => {
+      const historyMarkup = renderSchoolDateHistory(schoolName);
       const itemsMarkup = events
         .sort((left, right) => left.date - right.date)
         .map((event) => {
@@ -686,6 +689,7 @@ function renderSearchResults() {
         <div class="search-result-card">
           <h3>${escapeHtml(schoolName)}</h3>
           <div class="search-result-list">${itemsMarkup}</div>
+          ${historyMarkup}
         </div>
       `;
     })
@@ -1096,12 +1100,14 @@ function normalizeSharedPayload(payload) {
     notes: {},
     noteMeta: {},
     noteHistory: {},
+    dateHistory: {},
   };
   const dayEntries = Object.entries(payload.days || {});
   const zoneEntries = Object.entries(payload.zones || {});
   const noteEntries = Object.entries(payload.notes || {});
   const noteMetaEntries = Object.entries(payload.noteMeta || {});
   const noteHistoryEntries = Object.entries(payload.noteHistory || {});
+  const dateHistoryEntries = normalizeDateHistoryEntries(payload.dateHistory);
 
   dayEntries.forEach(([rawDateKey, value]) => {
     const dateKey = normalizeDateKey(rawDateKey);
@@ -1169,7 +1175,159 @@ function normalizeSharedPayload(payload) {
       .filter((entry) => entry.note);
   });
 
+  dateHistoryEntries.forEach(([schoolName, entries]) => {
+    const normalizedSchool = normalizeSchoolName(schoolName);
+    if (!normalizedSchool || !Array.isArray(entries)) {
+      return;
+    }
+
+    normalized.dateHistory[normalizedSchool] = entries
+      .map((entry) => normalizeDateHistoryEntry(entry))
+      .filter(Boolean)
+      .sort(compareDateHistoryEntries);
+  });
+
   return normalized;
+}
+
+function normalizeDateHistoryEntries(rawDateHistory) {
+  if (Array.isArray(rawDateHistory)) {
+    const grouped = new Map();
+
+    rawDateHistory.forEach((entry) => {
+      const schoolName = normalizeSchoolName(entry?.school || entry?.School || "");
+      if (!schoolName) {
+        return;
+      }
+
+      if (!grouped.has(schoolName)) {
+        grouped.set(schoolName, []);
+      }
+
+      grouped.get(schoolName).push(entry);
+    });
+
+    return [...grouped.entries()];
+  }
+
+  if (rawDateHistory && typeof rawDateHistory === "object") {
+    return Object.entries(rawDateHistory);
+  }
+
+  return [];
+}
+
+function normalizeDateHistoryEntry(entry) {
+  if (!entry || typeof entry !== "object") {
+    return null;
+  }
+
+  const oldDate = normalizeDateKey(
+    entry.oldEffectiveDate || entry.OldEffectiveDate || entry.oldDate || entry.old
+  );
+  const newDate = normalizeDateKey(
+    entry.newEffectiveDate || entry.NewEffectiveDate || entry.newDate || entry.new
+  );
+  const changedAt = String(
+    entry.timestamp || entry.Timestamp || entry.changedAt || entry.updatedAt || ""
+  ).trim();
+  const editedBy = String(entry.editedBy || entry.EditedBy || "").trim();
+  const sourceColumn = String(
+    entry.sourceColumn || entry.SourceColumn || ""
+  ).trim();
+
+  if (!oldDate && !newDate) {
+    return null;
+  }
+
+  return {
+    oldDate,
+    newDate,
+    changedAt,
+    editedBy,
+    sourceColumn,
+  };
+}
+
+function compareDateHistoryEntries(left, right) {
+  const leftTime = Date.parse(left.changedAt || "") || 0;
+  const rightTime = Date.parse(right.changedAt || "") || 0;
+  return rightTime - leftTime;
+}
+
+function renderSchoolDateHistory(schoolName) {
+  const entries = state.dateHistory[normalizeSchoolName(schoolName)] || [];
+
+  if (!entries.length) {
+    return "";
+  }
+
+  const itemsMarkup = entries
+    .map((entry) => {
+      return `
+        <div class="search-history-item">
+          <span class="search-history-dates">${escapeHtml(
+            formatDateHistoryRange(entry)
+          )}</span>
+          <span class="search-history-meta">${escapeHtml(
+            formatDateHistoryMeta(entry)
+          )}</span>
+        </div>
+      `;
+    })
+    .join("");
+
+  return `
+    <div class="search-history">
+      <p class="search-history-title">Moved Dates</p>
+      <div class="search-history-list">${itemsMarkup}</div>
+    </div>
+  `;
+}
+
+function formatDateHistoryRange(entry) {
+  const oldLabel = entry.oldDate ? formatShortDate(parseDateKey(entry.oldDate)) : "No date";
+  const newLabel = entry.newDate ? formatShortDate(parseDateKey(entry.newDate)) : "Cleared";
+  return `${oldLabel} -> ${newLabel}`;
+}
+
+function formatDateHistoryMeta(entry) {
+  const parts = [];
+
+  if (entry.changedAt) {
+    const parsed = new Date(entry.changedAt);
+    if (!Number.isNaN(parsed.getTime())) {
+      parts.push(
+        parsed.toLocaleString(undefined, {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+          hour: "numeric",
+          minute: "2-digit",
+        })
+      );
+    } else {
+      parts.push(entry.changedAt);
+    }
+  }
+
+  if (entry.editedBy) {
+    parts.push(entry.editedBy);
+  }
+
+  if (entry.sourceColumn) {
+    parts.push(`from ${entry.sourceColumn}`);
+  }
+
+  return parts.join(" • ");
+}
+
+function formatShortDate(date) {
+  return date.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 }
 
 function normalizeDateKey(rawDateKey) {

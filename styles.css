@@ -225,6 +225,46 @@ h1 {
   gap: 8px;
 }
 
+.search-history {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.search-history-title {
+  margin: 0 0 8px;
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.search-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.search-history-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(145, 102, 194, 0.08);
+}
+
+.search-history-dates {
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.search-history-meta {
+  font-size: 0.76rem;
+  color: var(--muted);
+}
+
 .search-result-item {
   display: flex;
   justify-content: space-between;
