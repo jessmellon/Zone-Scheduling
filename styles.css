@@ -491,6 +491,14 @@ button.search-result-item:focus-visible {
   gap: 8px;
 }
 
+.group-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
 .day-note-button {
   display: inline-flex;
   align-items: center;
@@ -512,6 +520,21 @@ button.search-result-item:focus-visible {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--muted);
+}
+
+.zone-note-chip {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 2px 8px;
+  background: rgba(255, 255, 255, 0.7);
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.zone-note-chip.has-note {
+  border-color: rgba(211, 171, 19, 0.55);
+  background: rgba(255, 232, 121, 0.28);
+  color: var(--text);
 }
 
 .detail-school-list {
