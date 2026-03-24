@@ -29,6 +29,7 @@ const monthLabel = document.querySelector("#month-label");
 const calendarGrid = document.querySelector("#calendar-grid");
 const filterList = document.querySelector("#filter-list");
 const selectionDetails = document.querySelector("#selection-details");
+const detailsPanel = selectionDetails ? selectionDetails.closest(".panel") : null;
 const statusBanner = document.querySelector("#status-banner");
 const lastUpdated = document.querySelector("#last-updated");
 const searchInput = document.querySelector("#school-search");
@@ -415,6 +416,7 @@ function renderCalendar() {
           state.selectedEventId = button.dataset.eventId;
           renderDetails();
           renderCalendar();
+          scrollDetailsIntoView();
         });
       });
     } else {
@@ -1151,6 +1153,17 @@ function scrollNotesPanelIntoView() {
   }
 
   dayNotesPanelAnchor.scrollIntoView({
+    behavior: "smooth",
+    block: "start",
+  });
+}
+
+function scrollDetailsIntoView() {
+  if (!detailsPanel) {
+    return;
+  }
+
+  detailsPanel.scrollIntoView({
     behavior: "smooth",
     block: "start",
   });
