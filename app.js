@@ -99,6 +99,13 @@ document.querySelector("#staffing-view-button").addEventListener("click", () => 
   render();
 });
 
+document.querySelector("#confirmed-view-button").addEventListener("click", () => {
+  state.viewMode = "confirmed";
+  state.selectedEventId = null;
+  state.selectedEventsDayKey = null;
+  render();
+});
+
 searchInput.addEventListener("input", (event) => {
   state.searchTerm = event.target.value.trim();
   renderSearchResults();
@@ -214,6 +221,7 @@ function buildEvents(sheetData) {
     sent: findHeaderIndex(headers, ["Sent?"]),
     photographers: findHeaderIndex(headers, ["Photographers"]),
     type: findHeaderIndex(headers, ["Type"]),
+    confirmed: findHeaderIndex(headers, ["Confirmed", "Roosted", "Added To Roosted", "Added to Roosted"]),
   };
 
   return rows
@@ -241,6 +249,11 @@ function buildEvents(sheetData) {
         sent: readCell(row.c, indexes.sent),
         photographers: readCell(row.c, indexes.photographers),
         type: readCell(row.c, indexes.type),
+        confirmed: readCell(
+          row.c,
+          indexes.confirmed !== undefined ? indexes.confirmed : 22,
+          true
+        ),
       };
     })
     .filter(Boolean);
@@ -268,6 +281,9 @@ function renderViewSwitch() {
   document
     .querySelector("#staffing-view-button")
     .classList.toggle("active", state.viewMode === "staffing");
+  document
+    .querySelector("#confirmed-view-button")
+    .classList.toggle("active", state.viewMode === "confirmed");
 }
 
 function renderHeader() {
@@ -279,16 +295,16 @@ function renderHeader() {
 }
 
 function renderFilters() {
-  const attributeFilteredEvents = getAttributeFilteredEvents();
+  const attributeFilteredEvents = getAttributeFilteredEventsForView();
   const counts =
-    state.viewMode === "staffing"
+    isStaffingLikeView()
       ? sumPhotographersByCategory(attributeFilteredEvents)
       : countByCategory(attributeFilteredEvents);
 
   filterList.innerHTML = "";
   counts.forEach(({ category, value }) => {
     const isActive =
-      state.viewMode === "staffing"
+      isStaffingLikeView()
         ? state.selectedStaffingZone === category
         : state.selectedCategory === category;
     const button = document.createElement("button");
@@ -301,6 +317,9 @@ function renderFilters() {
     `;
     button.addEventListener("click", () => {
       if (state.viewMode === "staffing") {
+        state.selectedStaffingZone =
+          state.selectedStaffingZone === category ? null : category;
+      } else if (state.viewMode === "confirmed") {
         state.selectedStaffingZone =
           state.selectedStaffingZone === category ? null : category;
       } else {
@@ -339,7 +358,7 @@ function renderActiveFilters() {
 
   const chips = [];
   const zoneFilter =
-    state.viewMode === "staffing" ? state.selectedStaffingZone : state.selectedCategory;
+    isStaffingLikeView() ? state.selectedStaffingZone : state.selectedCategory;
 
   if (zoneFilter) {
     chips.push(`Zone: ${zoneFilter}`);
@@ -397,7 +416,7 @@ function renderCalendar() {
   const gridStart = startOfWeek(monthStart);
   const gridEnd = endOfWeek(monthEnd);
   const visibleEvents = getVisibleEvents();
-  const allEvents = getAttributeFilteredEvents();
+  const allEvents = getAttributeFilteredEventsForView();
   const todayKey = formatDateKey(new Date());
 
   calendarGrid.innerHTML = "";
@@ -431,7 +450,7 @@ function renderCalendar() {
       cell.dataset.focusedDay = dayKey;
     }
 
-    if (state.viewMode === "staffing" && dayKey === state.selectedStaffingDayKey) {
+    if (isStaffingLikeView() && dayKey === state.selectedStaffingDayKey) {
       cell.classList.add("is-selected");
     }
 
@@ -447,7 +466,7 @@ function renderCalendar() {
       cell.classList.add("is-weekend-booked");
     }
 
-    if (state.viewMode === "staffing") {
+    if (isStaffingLikeView()) {
       applyCapacityClass(
         cell,
         getCapacityStatus(
@@ -458,7 +477,7 @@ function renderCalendar() {
     }
 
     const groupsMarkup =
-      state.viewMode === "staffing"
+      isStaffingLikeView()
         ? renderStaffingGroups(dayKey, allDayEvents)
         : renderEventGroups(dayEvents);
     const hasNote = hasDayNote(dayKey);
@@ -545,12 +564,18 @@ function renderCalendar() {
 
       cell.querySelectorAll("[data-day-limit]").forEach((input) => {
         input.addEventListener("change", (event) => {
+          if (state.viewMode === "confirmed") {
+            return;
+          }
           setDayLimit(dayKey, event.target.value);
         });
       });
 
       cell.querySelectorAll("[data-zone-limit]").forEach((input) => {
         input.addEventListener("change", (event) => {
+          if (state.viewMode === "confirmed") {
+            return;
+          }
           setZoneLimit(dayKey, event.target.dataset.zone, event.target.value);
         });
       });
@@ -600,6 +625,7 @@ function renderStaffingGroups(dayKey, dayEvents) {
   const dayLimit = getDayLimit(dayKey);
   const dayStatus = getCapacityStatus(totalPhotographers, dayLimit);
   const displayedZones = getDisplayedZones();
+  const limitsEditable = state.viewMode !== "confirmed";
 
   const plannerMarkup = `
     <div class="planner-card planner-total-card ${getCapacityClassName(dayStatus)}">
@@ -616,6 +642,7 @@ function renderStaffingGroups(dayKey, dayEvents) {
           step="1"
           value="${escapeHtml(dayLimit ?? "")}"
           data-day-limit="true"
+          ${limitsEditable ? "" : "disabled"}
         />
       </label>
     </div>
@@ -660,6 +687,7 @@ function renderStaffingGroups(dayKey, dayEvents) {
                 value="${escapeHtml(zoneLimit ?? "")}"
                 data-zone-limit="true"
                 data-zone="${escapeHtml(category)}"
+                ${limitsEditable ? "" : "disabled"}
               />
             </label>
           </div>
@@ -672,8 +700,8 @@ function renderStaffingGroups(dayKey, dayEvents) {
 }
 
 function renderDetails() {
-  if (state.viewMode === "staffing") {
-    const detailEvents = getAttributeFilteredEvents();
+  if (isStaffingLikeView()) {
+    const detailEvents = getAttributeFilteredEventsForView();
     const selectedDayEvents = state.selectedStaffingDayKey
       ? detailEvents
           .filter((event) => formatDateKey(event.date) === state.selectedStaffingDayKey)
@@ -731,13 +759,22 @@ function renderDetails() {
 
     selectionDetails.className = "details-card";
     selectionDetails.innerHTML = `
-      <h3>Zone staffing view</h3>
+      <h3>${state.viewMode === "confirmed" ? "Confirmed view" : "Zone staffing view"}</h3>
       <p>
-        Each day shows the total number of photographers scheduled in each zone.
+        ${
+          state.viewMode === "confirmed"
+            ? "Each day shows the total number of confirmed photographers in each zone."
+            : "Each day shows the total number of photographers scheduled in each zone."
+        }
         Click a day to see the schools scheduled there.
       </p>
       <div class="detail-grid">
-        ${renderDetailItem("Basis", "Sum of Photographers column")}
+        ${renderDetailItem(
+          "Basis",
+          state.viewMode === "confirmed"
+            ? "Confirmed rows only from column W"
+            : "Sum of Photographers column"
+        )}
         ${renderDetailItem(
           "Filter",
           state.selectedStaffingZone || "All zones"
@@ -992,9 +1029,9 @@ function renderColorLegend() {
 }
 
 function getVisibleEvents() {
-  const baseEvents = getAttributeFilteredEvents();
+  const baseEvents = getAttributeFilteredEventsForView();
   const activeCategory =
-    state.viewMode === "staffing" ? state.selectedStaffingZone : state.selectedCategory;
+    isStaffingLikeView() ? state.selectedStaffingZone : state.selectedCategory;
 
   if (!activeCategory) {
     return baseEvents;
@@ -1019,6 +1056,12 @@ function getAttributeFilteredEvents() {
 
     return true;
   });
+}
+
+function getAttributeFilteredEventsForView() {
+  return getAttributeFilteredEvents().filter((event) =>
+    state.viewMode === "confirmed" ? isConfirmedEvent(event) : true
+  );
 }
 
 function getUniqueAttributeValues(field) {
@@ -1138,7 +1181,7 @@ function buildZoneTotals(events) {
 }
 
 function getDisplayedZones() {
-  if (state.viewMode === "staffing" && state.selectedStaffingZone) {
+  if (isStaffingLikeView() && state.selectedStaffingZone) {
     return [state.selectedStaffingZone];
   }
 
@@ -1172,6 +1215,20 @@ function getPhotographerCount(event) {
 
 function getTotalPhotographers(events) {
   return events.reduce((sum, event) => sum + getPhotographerCount(event), 0);
+}
+
+function isConfirmedEvent(event) {
+  const value = event?.confirmed;
+  if (value === true) {
+    return true;
+  }
+
+  const normalized = String(value || "").trim().toLowerCase();
+  return normalized === "true" || normalized === "yes" || normalized === "1";
+}
+
+function isStaffingLikeView() {
+  return state.viewMode === "staffing" || state.viewMode === "confirmed";
 }
 
 function getCapacityStatus(actual, limit) {
