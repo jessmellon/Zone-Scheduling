@@ -107,6 +107,10 @@ h1 {
   background: #efede8;
 }
 
+.calendar-panel.is-filtered {
+  background: #f3d7d7;
+}
+
 .hero-card {
   min-width: 260px;
   padding: 20px;

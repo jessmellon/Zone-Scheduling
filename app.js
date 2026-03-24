@@ -51,6 +51,7 @@ const dayNotesPanelAnchor = document.querySelector("#day-notes-panel-anchor");
 const dayNotesPanel = document.querySelector("#day-notes-panel");
 const saveNoteButton = document.querySelector("#save-note");
 const noteHistory = document.querySelector("#note-history");
+const calendarPanel = document.querySelector(".calendar-panel");
 
 document.querySelector("#save-note").addEventListener("click", () => {
   saveSelectedNote();
@@ -356,6 +357,9 @@ function renderActiveFilters() {
   if (!chips.length) {
     activeFilters.innerHTML = "";
     activeFilters.classList.add("is-hidden");
+    if (calendarPanel) {
+      calendarPanel.classList.remove("is-filtered");
+    }
     return;
   }
 
@@ -366,6 +370,9 @@ function renderActiveFilters() {
       .join("")}
   `;
   activeFilters.classList.remove("is-hidden");
+  if (calendarPanel) {
+    calendarPanel.classList.add("is-filtered");
+  }
 }
 
 function renderAttributeFilterList(container, values, activeValue, onSelect) {
