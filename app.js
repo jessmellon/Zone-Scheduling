@@ -9,6 +9,7 @@ const state = {
   currentMonth: null,
   selectedCategory: null,
   selectedStaffingZone: null,
+  selectedStaffingDayKey: null,
   selectedEventId: null,
   focusedDayKey: null,
   searchTerm: "",
@@ -72,6 +73,7 @@ document.querySelector("#reset-filter").addEventListener("click", () => {
 document.querySelector("#events-view-button").addEventListener("click", () => {
   state.viewMode = "events";
   state.selectedEventId = null;
+  state.selectedStaffingDayKey = null;
   render();
 });
 
@@ -354,6 +356,10 @@ function renderCalendar() {
       cell.dataset.focusedDay = dayKey;
     }
 
+    if (state.viewMode === "staffing" && dayKey === state.selectedStaffingDayKey) {
+      cell.classList.add("is-selected");
+    }
+
     if (isWeekend) {
       cell.classList.add("is-weekend");
     }
@@ -412,6 +418,20 @@ function renderCalendar() {
         });
       });
     } else {
+      cell.addEventListener("click", (event) => {
+        if (
+          event.target.closest("[data-note-day]") ||
+          event.target.closest("[data-day-limit]") ||
+          event.target.closest("[data-zone-limit]")
+        ) {
+          return;
+        }
+
+        state.selectedStaffingDayKey = dayKey;
+        renderDetails();
+        renderCalendar();
+      });
+
       cell.querySelectorAll("[data-day-limit]").forEach((input) => {
         input.addEventListener("change", (event) => {
           setDayLimit(dayKey, event.target.value);
@@ -533,11 +553,67 @@ function renderStaffingGroups(dayKey, dayEvents) {
 
 function renderDetails() {
   if (state.viewMode === "staffing") {
+    const selectedDayEvents = state.selectedStaffingDayKey
+      ? state.events
+          .filter((event) => formatDateKey(event.date) === state.selectedStaffingDayKey)
+          .sort((left, right) => {
+            const zoneCompare = compareZoneEntries(
+              { category: left.category },
+              { category: right.category }
+            );
+            if (zoneCompare !== 0) {
+              return zoneCompare;
+            }
+            return left.title.localeCompare(right.title);
+          })
+      : [];
+
+    if (state.selectedStaffingDayKey) {
+      const selectedDate = parseDateKey(state.selectedStaffingDayKey);
+      const itemsMarkup = selectedDayEvents.length
+        ? selectedDayEvents
+            .map((event) => {
+              return `
+                <div class="detail-school-item">
+                  <strong>${escapeHtml(event.schoolName)}</strong>
+                  <span>${escapeHtml(
+                    [event.category, event.type, `${getPhotographerCount(event)} Photog${
+                      getPhotographerCount(event) === 1 ? "" : "s"
+                    }`]
+                      .filter(Boolean)
+                      .join(" • ")
+                  )}</span>
+                </div>
+              `;
+            })
+            .join("")
+        : '<p class="details-empty-copy">No schools scheduled for this day.</p>';
+
+      selectionDetails.className = "details-card";
+      selectionDetails.innerHTML = `
+        <h3>${escapeHtml(
+          selectedDate.toLocaleDateString(undefined, {
+            weekday: "long",
+            month: "long",
+            day: "numeric",
+            year: "numeric",
+          })
+        )}</h3>
+        <p>${selectedDayEvents.length} scheduled school${
+          selectedDayEvents.length === 1 ? "" : "s"
+        }${state.selectedStaffingZone ? ` across all zones while filtered to ${state.selectedStaffingZone}` : ""}.</p>
+        <div class="detail-school-list">${itemsMarkup}</div>
+        ${renderColorLegend()}
+      `;
+      return;
+    }
+
     selectionDetails.className = "details-card";
     selectionDetails.innerHTML = `
       <h3>Zone staffing view</h3>
       <p>
         Each day shows the total number of photographers scheduled in each zone.
+        Click a day to see the schools scheduled there.
       </p>
       <div class="detail-grid">
         ${renderDetailItem("Basis", "Sum of Photographers column")}

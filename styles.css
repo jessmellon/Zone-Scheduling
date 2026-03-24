@@ -431,6 +431,10 @@ button.search-result-item:focus-visible {
   gap: 8px;
 }
 
+.day-cell.is-selected {
+  box-shadow: inset 0 0 0 2px rgba(24, 102, 75, 0.75);
+}
+
 .day-cell.is-weekend {
   background: rgba(186, 167, 255, 0.2);
 }
@@ -508,6 +512,29 @@ button.search-result-item:focus-visible {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--muted);
+}
+
+.detail-school-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.detail-school-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: var(--surface-strong);
+}
+
+.detail-school-item span,
+.details-empty-copy {
+  color: var(--muted);
+  font-size: 0.9rem;
 }
 
 .day-number.has-note {
