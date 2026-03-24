@@ -39,6 +39,7 @@ const searchResults = document.querySelector("#search-results");
 const dayNoteInput = document.querySelector("#day-note-input");
 const noteDateLabel = document.querySelector("#note-date-label");
 const currentNoteMeta = document.querySelector("#current-note-meta");
+const holidayNote = document.querySelector("#holiday-note");
 const dayNotesPanelAnchor = document.querySelector("#day-notes-panel-anchor");
 const dayNotesPanel = document.querySelector("#day-notes-panel");
 const saveNoteButton = document.querySelector("#save-note");
@@ -391,6 +392,7 @@ function renderCalendar() {
         ? renderStaffingGroups(dayKey, allDayEvents)
         : renderEventGroups(dayEvents);
     const hasNote = hasDayNote(dayKey);
+    const holidayName = getHolidayName(dayKey);
 
     cell.innerHTML = `
       <div class="day-heading">
@@ -406,6 +408,11 @@ function renderCalendar() {
           cursor.toLocaleDateString(undefined, { weekday: "short" })
         )}</div>
       </div>
+      ${
+        holidayName
+          ? `<div class="holiday-chip">${escapeHtml(holidayName)}</div>`
+          : ""
+      }
       <div class="day-groups">${groupsMarkup}</div>
     `;
 
@@ -757,6 +764,8 @@ function renderNotesPanel() {
   if (!state.selectedNoteDateKey) {
     noteDateLabel.textContent = "Select a day or zone to add a note.";
     currentNoteMeta.textContent = "";
+    holidayNote.textContent = "";
+    holidayNote.classList.add("is-hidden");
     dayNoteInput.value = "";
     dayNoteInput.disabled = true;
     dayNotesPanel.classList.remove("has-note");
@@ -775,11 +784,14 @@ function renderNotesPanel() {
   if (state.selectedNoteZone) {
     noteDateLabel.textContent += ` • ${state.selectedNoteZone}`;
   }
+  const holidayName = getHolidayName(state.selectedNoteDateKey);
   dayNoteInput.disabled = false;
   const noteKey = getSelectedNoteStorageKey();
   const noteValue = state.notes[noteKey] || "";
   dayNoteInput.value = noteValue;
-  dayNotesPanel.classList.toggle("has-note", Boolean(noteValue.trim()));
+  holidayNote.textContent = holidayName ? `Holiday: ${holidayName}` : "";
+  holidayNote.classList.toggle("is-hidden", !holidayName);
+  dayNotesPanel.classList.toggle("has-note", Boolean(noteValue.trim()) || Boolean(holidayName));
   currentNoteMeta.textContent = buildCurrentNoteMeta(noteKey);
   renderNoteHistory(noteKey);
   updateNoteSaveButtonState();
@@ -1779,6 +1791,62 @@ function buildCurrentNoteMeta(dateKey) {
     hour: "numeric",
     minute: "2-digit",
   })}`;
+}
+
+function getHolidayName(dateKey) {
+  const date = parseDateKey(dateKey);
+  const year = date.getFullYear();
+  const holidays = buildUsFederalHolidayMap(year);
+  return holidays[dateKey] || "";
+}
+
+function buildUsFederalHolidayMap(year) {
+  const holidays = {};
+
+  addHoliday(holidays, observedDate(year, 0, 1), "New Year's Day");
+  addHoliday(holidays, nthWeekdayOfMonth(year, 0, 1, 3), "Martin Luther King Jr. Day");
+  addHoliday(holidays, nthWeekdayOfMonth(year, 1, 1, 3), "Presidents Day");
+  addHoliday(holidays, lastWeekdayOfMonth(year, 4, 1), "Memorial Day");
+  addHoliday(holidays, observedDate(year, 5, 19), "Juneteenth");
+  addHoliday(holidays, observedDate(year, 6, 4), "Independence Day");
+  addHoliday(holidays, nthWeekdayOfMonth(year, 8, 1, 1), "Labor Day");
+  addHoliday(holidays, nthWeekdayOfMonth(year, 9, 1, 2), "Columbus Day");
+  addHoliday(holidays, observedDate(year, 10, 11), "Veterans Day");
+  addHoliday(holidays, nthWeekdayOfMonth(year, 10, 4, 4), "Thanksgiving");
+  addHoliday(holidays, observedDate(year, 11, 25), "Christmas Day");
+
+  return holidays;
+}
+
+function addHoliday(map, date, label) {
+  map[formatDateKey(date)] = label;
+}
+
+function observedDate(year, monthIndex, day) {
+  const date = new Date(year, monthIndex, day);
+  const weekday = date.getDay();
+
+  if (weekday === 6) {
+    return new Date(year, monthIndex, day - 1);
+  }
+
+  if (weekday === 0) {
+    return new Date(year, monthIndex, day + 1);
+  }
+
+  return date;
+}
+
+function nthWeekdayOfMonth(year, monthIndex, weekday, nth) {
+  const firstDay = new Date(year, monthIndex, 1);
+  const offset = (7 + weekday - firstDay.getDay()) % 7;
+  return new Date(year, monthIndex, 1 + offset + (nth - 1) * 7);
+}
+
+function lastWeekdayOfMonth(year, monthIndex, weekday) {
+  const lastDay = new Date(year, monthIndex + 1, 0);
+  const offset = (7 + lastDay.getDay() - weekday) % 7;
+  return new Date(year, monthIndex, lastDay.getDate() - offset);
 }
 
 function setStatus(message) {

@@ -309,6 +309,20 @@ button.search-result-item:focus-visible {
   font-size: 0.8rem;
 }
 
+.holiday-note {
+  margin-bottom: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(211, 171, 19, 0.16);
+  border: 1px solid rgba(211, 171, 19, 0.35);
+  color: var(--text);
+  font-size: 0.88rem;
+}
+
+.is-hidden {
+  display: none !important;
+}
+
 .note-input {
   width: 100%;
   min-height: 110px;
@@ -535,6 +549,17 @@ button.search-result-item:focus-visible {
   border-color: rgba(211, 171, 19, 0.55);
   background: rgba(255, 232, 121, 0.28);
   color: var(--text);
+}
+
+.holiday-chip {
+  align-self: flex-start;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(211, 171, 19, 0.18);
+  border: 1px solid rgba(211, 171, 19, 0.45);
+  color: var(--text);
+  font-size: 0.72rem;
+  font-weight: 700;
 }
 
 .detail-school-list {
