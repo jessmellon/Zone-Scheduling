@@ -515,6 +515,8 @@ button.search-result-item:focus-visible {
   padding: 12px;
   border-radius: 20px;
   border: 1px solid var(--line);
+  border-top-color: rgba(85, 65, 130, 0.22);
+  border-bottom-color: rgba(85, 65, 130, 0.22);
   background: rgba(255, 255, 255, 0.68);
   display: flex;
   flex-direction: column;
@@ -522,7 +524,7 @@ button.search-result-item:focus-visible {
 }
 
 .day-cell:nth-child(n + 8) {
-  border-top-color: rgba(85, 65, 130, 0.24);
+  border-top-color: rgba(85, 65, 130, 0.3);
 }
 
 .day-cell.is-selected {
