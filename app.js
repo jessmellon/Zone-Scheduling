@@ -245,11 +245,7 @@ function buildEvents(sheetData) {
         sent: readCell(row.c, indexes.sent),
         photographers: readCell(row.c, indexes.photographers),
         type: readCell(row.c, indexes.type),
-        confirmed: readCell(
-          row.c,
-          indexes.confirmed !== undefined ? indexes.confirmed : 22,
-          true
-        ),
+        confirmed: parseConfirmedCell(readCell(row.c, indexes.confirmed, true)),
       };
     })
     .filter(Boolean);
@@ -1213,6 +1209,28 @@ function isConfirmedEvent(event) {
   }
 
   const normalized = String(value || "").trim().toLowerCase();
+  return normalized === "true" || normalized === "yes" || normalized === "1";
+}
+
+function parseConfirmedCell(cell) {
+  if (!cell) {
+    return false;
+  }
+
+  if (typeof cell.v === "boolean") {
+    return cell.v;
+  }
+
+  if (typeof cell.f === "string" && cell.f.trim()) {
+    const formatted = cell.f.trim().toLowerCase();
+    return formatted === "true" || formatted === "yes" || formatted === "1";
+  }
+
+  if (cell.v === null || cell.v === undefined) {
+    return false;
+  }
+
+  const normalized = String(cell.v).trim().toLowerCase();
   return normalized === "true" || normalized === "yes" || normalized === "1";
 }
 
