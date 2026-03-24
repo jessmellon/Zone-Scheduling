@@ -1020,7 +1020,7 @@ function normalizeTypeFilterValue(value) {
 
   const lower = normalized.toLowerCase();
   if (lower.includes("senior session")) {
-    return "Senior Session";
+    return "Seniors";
   }
   if (lower.includes("underclass")) {
     return "Underclass";
