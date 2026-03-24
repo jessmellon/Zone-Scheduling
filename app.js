@@ -272,28 +272,7 @@ function renderHeader() {
     month: "long",
     year: "numeric",
   });
-
-  const visibleEvents = getVisibleEvents();
-  if (state.viewMode === "staffing") {
-    const totalPhotographers = visibleEvents.reduce(
-      (sum, event) => sum + getPhotographerCount(event),
-      0
-    );
-    setStatus(
-      `${totalPhotographers} Photog${
-        totalPhotographers === 1 ? "" : "s"
-      } scheduled${
-        state.selectedStaffingZone ? ` for ${state.selectedStaffingZone}` : ""
-      }`
-    );
-    return;
-  }
-
-  setStatus(
-    `${visibleEvents.length} event${visibleEvents.length === 1 ? "" : "s"} shown${
-      state.selectedCategory ? ` for ${state.selectedCategory}` : ""
-    }`
-  );
+  setStatus("");
 }
 
 function renderFilters() {
