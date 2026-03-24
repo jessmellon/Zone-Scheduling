@@ -34,6 +34,19 @@
       <main class="layout">
         <aside class="sidebar">
           <section class="panel">
+            <p class="panel-label">School Search</p>
+            <input
+              id="school-search"
+              class="search-input"
+              type="search"
+              placeholder="Search for a school"
+            />
+            <div id="search-results" class="search-results">
+              Start typing to see a school's dates.
+            </div>
+          </section>
+
+          <section class="panel">
             <div class="panel-row">
               <p class="panel-label">Filter</p>
               <button id="reset-filter" class="ghost-button" type="button">
@@ -74,18 +87,6 @@
             <div id="note-history" class="note-history"></div>
           </section>
 
-          <section class="panel">
-            <p class="panel-label">School Search</p>
-            <input
-              id="school-search"
-              class="search-input"
-              type="search"
-              placeholder="Search for a school"
-            />
-            <div id="search-results" class="search-results">
-              Start typing to see a school's dates.
-            </div>
-          </section>
         </aside>
 
         <section class="calendar-panel">
