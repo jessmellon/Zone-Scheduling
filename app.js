@@ -984,7 +984,7 @@ function getAttributeFilteredEvents() {
       return false;
     }
 
-    if (state.selectedType && normalizeAttributeValue(event.type) !== state.selectedType) {
+    if (state.selectedType && normalizeTypeFilterValue(event.type) !== state.selectedType) {
       return false;
     }
 
@@ -997,6 +997,14 @@ function getAttributeFilteredEvents() {
 }
 
 function getUniqueAttributeValues(field) {
+  if (field === "type") {
+    return [...new Set(
+      state.events
+        .map((event) => normalizeTypeFilterValue(event.type))
+        .filter(Boolean)
+    )].sort((left, right) => left.localeCompare(right, undefined, { numeric: true }));
+  }
+
   return [...new Set(
     state.events
       .map((event) => normalizeAttributeValue(event[field]))
@@ -1023,6 +1031,26 @@ function normalizeSentValue(value) {
   }
 
   return normalized.toLowerCase() === "sent" ? "Sent" : normalized;
+}
+
+function normalizeTypeFilterValue(value) {
+  const normalized = String(value || "").trim();
+  if (!normalized) {
+    return "";
+  }
+
+  const lower = normalized.toLowerCase();
+  if (lower.includes("senior session")) {
+    return "Senior Session";
+  }
+  if (lower.includes("underclass")) {
+    return "Underclass";
+  }
+  if (lower.includes("panoramic")) {
+    return "Panoramic";
+  }
+
+  return normalized;
 }
 
 function countByCategory(events) {
