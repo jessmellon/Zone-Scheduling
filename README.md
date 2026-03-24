@@ -2,6 +2,11 @@
 
 Static site that reads the shared Google Sheet `Dates` tab and renders a calendar grouped by column `E` (`Zone`).
 
+For documentation:
+
+- `QUICK_START.md`: short how-to guide for everyday use
+- `USER_GUIDE.md`: full walkthrough of features and workflow
+
 ## Run locally
 
 Use any simple static server from this folder. For example:

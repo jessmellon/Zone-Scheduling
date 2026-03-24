@@ -353,6 +353,7 @@ function renderActiveFilters() {
   }
 
   const chips = [];
+  const attributeFilterChips = [];
   const zoneFilter =
     isStaffingLikeView() ? state.selectedStaffingZone : state.selectedCategory;
 
@@ -360,16 +361,24 @@ function renderActiveFilters() {
     chips.push(`Zone: ${zoneFilter}`);
   }
   if (state.selectedStars) {
-    chips.push(`Stars: ${state.selectedStars}`);
+    const chip = `Stars: ${state.selectedStars}`;
+    chips.push(chip);
+    attributeFilterChips.push(chip);
   }
   if (state.selectedType) {
-    chips.push(`Type: ${state.selectedType}`);
+    const chip = `Type: ${state.selectedType}`;
+    chips.push(chip);
+    attributeFilterChips.push(chip);
   }
   if (state.selectedSent) {
-    chips.push(`Sent: ${state.selectedSent}`);
+    const chip = `Sent: ${state.selectedSent}`;
+    chips.push(chip);
+    attributeFilterChips.push(chip);
   }
   if (state.selectedConfirmed) {
-    chips.push(`Confirmed: ${state.selectedConfirmed}`);
+    const chip = `Confirmed: ${state.selectedConfirmed}`;
+    chips.push(chip);
+    attributeFilterChips.push(chip);
   }
 
   if (!chips.length) {
@@ -389,7 +398,7 @@ function renderActiveFilters() {
   `;
   activeFilters.classList.remove("is-hidden");
   if (calendarPanel) {
-    calendarPanel.classList.add("is-filtered");
+    calendarPanel.classList.toggle("is-filtered", attributeFilterChips.length > 0);
   }
 }
 
