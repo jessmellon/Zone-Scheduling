@@ -33,6 +33,7 @@ const state = {
 const monthLabel = document.querySelector("#month-label");
 const calendarGrid = document.querySelector("#calendar-grid");
 const filterList = document.querySelector("#filter-list");
+const activeFilters = document.querySelector("#active-filters");
 const starsFilterList = document.querySelector("#stars-filter-list");
 const typeFilterList = document.querySelector("#type-filter-list");
 const sentFilterList = document.querySelector("#sent-filter-list");
@@ -252,6 +253,7 @@ function render() {
   renderViewSwitch();
   renderHeader();
   renderFilters();
+  renderActiveFilters();
   renderCalendar();
   renderDetails();
   renderNotesPanel();
@@ -327,6 +329,43 @@ function renderAttributeFilters() {
     state.selectedSent = state.selectedSent === value ? null : value;
     render();
   });
+}
+
+function renderActiveFilters() {
+  if (!activeFilters) {
+    return;
+  }
+
+  const chips = [];
+  const zoneFilter =
+    state.viewMode === "staffing" ? state.selectedStaffingZone : state.selectedCategory;
+
+  if (zoneFilter) {
+    chips.push(`Zone: ${zoneFilter}`);
+  }
+  if (state.selectedStars) {
+    chips.push(`Stars: ${state.selectedStars}`);
+  }
+  if (state.selectedType) {
+    chips.push(`Type: ${state.selectedType}`);
+  }
+  if (state.selectedSent) {
+    chips.push(`Sent: ${state.selectedSent}`);
+  }
+
+  if (!chips.length) {
+    activeFilters.innerHTML = "";
+    activeFilters.classList.add("is-hidden");
+    return;
+  }
+
+  activeFilters.innerHTML = `
+    <span class="active-filters-label">Filtered View</span>
+    ${chips
+      .map((chip) => `<span class="active-filter-chip">${escapeHtml(chip)}</span>`)
+      .join("")}
+  `;
+  activeFilters.classList.remove("is-hidden");
 }
 
 function renderAttributeFilterList(container, values, activeValue, onSelect) {

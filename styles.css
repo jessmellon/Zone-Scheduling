@@ -452,6 +452,35 @@ button.search-result-item:focus-visible {
   color: #fff;
 }
 
+.active-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-top: 14px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(85, 65, 130, 0.22);
+  background: rgba(111, 88, 156, 0.08);
+}
+
+.active-filters-label {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.active-filter-chip {
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(85, 65, 130, 0.16);
+  color: var(--text);
+  font-size: 0.84rem;
+}
+
 #month-label {
   margin: 0;
   min-width: 240px;
