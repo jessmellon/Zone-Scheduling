@@ -10,6 +10,7 @@ const state = {
   selectedCategory: null,
   selectedStaffingZone: null,
   selectedStaffingDayKey: null,
+  selectedEventsDayKey: null,
   selectedEventId: null,
   focusedDayKey: null,
   searchTerm: "",
@@ -81,6 +82,7 @@ document.querySelector("#events-view-button").addEventListener("click", () => {
 document.querySelector("#staffing-view-button").addEventListener("click", () => {
   state.viewMode = "staffing";
   state.selectedEventId = null;
+  state.selectedEventsDayKey = null;
   render();
 });
 
@@ -361,6 +363,10 @@ function renderCalendar() {
       cell.classList.add("is-selected");
     }
 
+    if (state.viewMode === "events" && dayKey === state.selectedEventsDayKey) {
+      cell.classList.add("is-selected");
+    }
+
     if (isWeekend) {
       cell.classList.add("is-weekend");
     }
@@ -411,9 +417,22 @@ function renderCalendar() {
     });
 
     if (state.viewMode === "events") {
+      cell.addEventListener("click", (event) => {
+        if (event.target.closest("[data-note-day]") || event.target.closest("[data-event-id]")) {
+          return;
+        }
+
+        state.selectedEventsDayKey = dayKey;
+        state.selectedEventId = null;
+        renderDetails();
+        renderCalendar();
+        scrollDetailsIntoView();
+      });
+
       cell.querySelectorAll("[data-event-id]").forEach((button) => {
         button.addEventListener("click", () => {
           state.selectedEventId = button.dataset.eventId;
+          state.selectedEventsDayKey = null;
           renderDetails();
           renderCalendar();
           scrollDetailsIntoView();
@@ -625,6 +644,56 @@ function renderDetails() {
         )}
       </div>
       ${renderColorLegend()}
+    `;
+    return;
+  }
+
+  if (state.selectedEventsDayKey) {
+    const selectedDate = parseDateKey(state.selectedEventsDayKey);
+    const dayEvents = state.events
+      .filter((event) => formatDateKey(event.date) === state.selectedEventsDayKey)
+      .sort((left, right) => {
+        const zoneCompare = compareZoneEntries(
+          { category: left.category },
+          { category: right.category }
+        );
+        if (zoneCompare !== 0) {
+          return zoneCompare;
+        }
+        return left.title.localeCompare(right.title);
+      });
+    const historyEntries = getDateHistoryForDay(state.selectedEventsDayKey);
+
+    selectionDetails.className = "details-card";
+    selectionDetails.innerHTML = `
+      <h3>${escapeHtml(
+        selectedDate.toLocaleDateString(undefined, {
+          weekday: "long",
+          month: "long",
+          day: "numeric",
+          year: "numeric",
+        })
+      )}</h3>
+      <p>Click a school for event details, or review what moved to or from this day below.</p>
+      <div class="detail-school-list">
+        ${
+          dayEvents.length
+            ? dayEvents
+                .map((event) => {
+                  return `
+                    <div class="detail-school-item">
+                      <strong>${escapeHtml(event.schoolName)}</strong>
+                      <span>${escapeHtml(
+                        [event.category, event.type].filter(Boolean).join(" • ")
+                      )}</span>
+                    </div>
+                  `;
+                })
+                .join("")
+            : '<p class="details-empty-copy">No schools currently scheduled for this day.</p>'
+        }
+      </div>
+      ${renderDayHistoryDetails(historyEntries)}
     `;
     return;
   }
@@ -1370,6 +1439,53 @@ function renderSchoolDateHistory(schoolName) {
     <div class="search-history">
       <p class="search-history-title">Moved Dates</p>
       <div class="search-history-list">${itemsMarkup}</div>
+    </div>
+  `;
+}
+
+function getDateHistoryForDay(dateKey) {
+  const entries = [];
+
+  Object.entries(state.dateHistory).forEach(([schoolName, schoolEntries]) => {
+    schoolEntries.forEach((entry) => {
+      if (entry.oldDate === dateKey || entry.newDate === dateKey) {
+        entries.push({
+          ...entry,
+          schoolName,
+        });
+      }
+    });
+  });
+
+  return entries.sort(compareDateHistoryEntries);
+}
+
+function renderDayHistoryDetails(entries) {
+  if (!entries.length) {
+    return `
+      <div class="detail-history">
+        <h3>Change History</h3>
+        <p class="details-empty-copy">No date changes recorded for this day.</p>
+      </div>
+    `;
+  }
+
+  const itemsMarkup = entries
+    .map((entry) => {
+      return `
+        <div class="detail-school-item">
+          <strong>${escapeHtml(entry.schoolName)}</strong>
+          <span>${escapeHtml(formatDateHistoryRange(entry))}</span>
+          <span>${escapeHtml(formatDateHistoryMeta(entry))}</span>
+        </div>
+      `;
+    })
+    .join("");
+
+  return `
+    <div class="detail-history">
+      <h3>Change History</h3>
+      <div class="detail-school-list">${itemsMarkup}</div>
     </div>
   `;
 }
