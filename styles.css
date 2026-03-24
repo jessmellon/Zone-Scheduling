@@ -155,6 +155,36 @@ h1 {
   gap: 10px;
 }
 
+.attribute-group + .attribute-group {
+  margin-top: 16px;
+}
+
+.attribute-label {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.attribute-filter-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.attribute-chip {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 7px 10px;
+  background: var(--surface-strong);
+  color: var(--text);
+}
+
+.attribute-chip.active {
+  border-color: rgba(24, 102, 75, 0.45);
+  background: rgba(24, 102, 75, 0.08);
+}
+
 .summary-item,
 .filter-chip {
   display: flex;

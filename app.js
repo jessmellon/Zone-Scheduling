@@ -9,6 +9,9 @@ const state = {
   currentMonth: null,
   selectedCategory: null,
   selectedStaffingZone: null,
+  selectedStars: null,
+  selectedType: null,
+  selectedSent: null,
   selectedStaffingDayKey: null,
   selectedEventsDayKey: null,
   selectedEventId: null,
@@ -30,6 +33,9 @@ const state = {
 const monthLabel = document.querySelector("#month-label");
 const calendarGrid = document.querySelector("#calendar-grid");
 const filterList = document.querySelector("#filter-list");
+const starsFilterList = document.querySelector("#stars-filter-list");
+const typeFilterList = document.querySelector("#type-filter-list");
+const sentFilterList = document.querySelector("#sent-filter-list");
 const selectionDetails = document.querySelector("#selection-details");
 const detailsPanel = selectionDetails ? selectionDetails.closest(".panel") : null;
 const statusBanner = document.querySelector("#status-banner");
@@ -71,6 +77,9 @@ document.querySelector("#today-button").addEventListener("click", () => {
 document.querySelector("#reset-filter").addEventListener("click", () => {
   state.selectedCategory = null;
   state.selectedStaffingZone = null;
+  state.selectedStars = null;
+  state.selectedType = null;
+  state.selectedSent = null;
   render();
 });
 
@@ -288,10 +297,11 @@ function renderHeader() {
 }
 
 function renderFilters() {
+  const attributeFilteredEvents = getAttributeFilteredEvents();
   const counts =
     state.viewMode === "staffing"
-      ? sumPhotographersByCategory(state.events)
-      : countByCategory(state.events);
+      ? sumPhotographersByCategory(attributeFilteredEvents)
+      : countByCategory(attributeFilteredEvents);
 
   filterList.innerHTML = "";
   counts.forEach(({ category, value }) => {
@@ -319,6 +329,41 @@ function renderFilters() {
     });
     filterList.appendChild(button);
   });
+
+  renderAttributeFilters();
+}
+
+function renderAttributeFilters() {
+  renderAttributeFilterList(starsFilterList, getUniqueAttributeValues("stars"), state.selectedStars, (value) => {
+    state.selectedStars = state.selectedStars === value ? null : value;
+    render();
+  });
+
+  renderAttributeFilterList(typeFilterList, getUniqueAttributeValues("type"), state.selectedType, (value) => {
+    state.selectedType = state.selectedType === value ? null : value;
+    render();
+  });
+
+  renderAttributeFilterList(sentFilterList, getUniqueSentValues(), state.selectedSent, (value) => {
+    state.selectedSent = state.selectedSent === value ? null : value;
+    render();
+  });
+}
+
+function renderAttributeFilterList(container, values, activeValue, onSelect) {
+  if (!container) {
+    return;
+  }
+
+  container.innerHTML = "";
+  values.forEach((value) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = `attribute-chip${activeValue === value ? " active" : ""}`;
+    button.textContent = value;
+    button.addEventListener("click", () => onSelect(value));
+    container.appendChild(button);
+  });
 }
 
 function renderCalendar() {
@@ -327,7 +372,7 @@ function renderCalendar() {
   const gridStart = startOfWeek(monthStart);
   const gridEnd = endOfWeek(monthEnd);
   const visibleEvents = getVisibleEvents();
-  const allEvents = state.events;
+  const allEvents = getAttributeFilteredEvents();
   const todayKey = formatDateKey(new Date());
 
   calendarGrid.innerHTML = "";
@@ -603,8 +648,9 @@ function renderStaffingGroups(dayKey, dayEvents) {
 
 function renderDetails() {
   if (state.viewMode === "staffing") {
+    const detailEvents = getAttributeFilteredEvents();
     const selectedDayEvents = state.selectedStaffingDayKey
-      ? state.events
+      ? detailEvents
           .filter((event) => formatDateKey(event.date) === state.selectedStaffingDayKey)
           .sort((left, right) => {
             const zoneCompare = compareZoneEntries(
@@ -679,7 +725,7 @@ function renderDetails() {
 
   if (state.selectedEventsDayKey) {
     const selectedDate = parseDateKey(state.selectedEventsDayKey);
-    const dayEvents = state.events
+    const dayEvents = getAttributeFilteredEvents()
       .filter((event) => formatDateKey(event.date) === state.selectedEventsDayKey)
       .sort((left, right) => {
         const zoneCompare = compareZoneEntries(
@@ -727,7 +773,7 @@ function renderDetails() {
     return;
   }
 
-  const event = state.events.find((item) => item.id === state.selectedEventId);
+  const event = getAttributeFilteredEvents().find((item) => item.id === state.selectedEventId);
 
   if (!event) {
     selectionDetails.className = "details-card";
@@ -921,14 +967,62 @@ function renderColorLegend() {
 }
 
 function getVisibleEvents() {
+  const baseEvents = getAttributeFilteredEvents();
   const activeCategory =
     state.viewMode === "staffing" ? state.selectedStaffingZone : state.selectedCategory;
 
   if (!activeCategory) {
-    return state.events;
+    return baseEvents;
   }
 
-  return state.events.filter((event) => event.category === activeCategory);
+  return baseEvents.filter((event) => event.category === activeCategory);
+}
+
+function getAttributeFilteredEvents() {
+  return state.events.filter((event) => {
+    if (state.selectedStars && normalizeAttributeValue(event.stars) !== state.selectedStars) {
+      return false;
+    }
+
+    if (state.selectedType && normalizeAttributeValue(event.type) !== state.selectedType) {
+      return false;
+    }
+
+    if (state.selectedSent && normalizeSentValue(event.sent) !== state.selectedSent) {
+      return false;
+    }
+
+    return true;
+  });
+}
+
+function getUniqueAttributeValues(field) {
+  return [...new Set(
+    state.events
+      .map((event) => normalizeAttributeValue(event[field]))
+      .filter(Boolean)
+  )].sort((left, right) => left.localeCompare(right, undefined, { numeric: true }));
+}
+
+function getUniqueSentValues() {
+  return [...new Set(
+    state.events
+      .map((event) => normalizeSentValue(event.sent))
+      .filter(Boolean)
+  )].sort((left, right) => left.localeCompare(right));
+}
+
+function normalizeAttributeValue(value) {
+  return String(value || "").trim();
+}
+
+function normalizeSentValue(value) {
+  const normalized = String(value || "").trim();
+  if (!normalized) {
+    return "";
+  }
+
+  return normalized.toLowerCase() === "sent" ? "Sent" : normalized;
 }
 
 function countByCategory(events) {
