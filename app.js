@@ -1,7 +1,7 @@
 const SHEET_GVIZ_URL =
   "https://docs.google.com/spreadsheets/d/1_KPdGkIe-tQrKEFxqAfJL87VvX73aEPuwVW5G_b4zOI/gviz/tq?tqx=out:json&sheet=Copy%20of%20Dates";
 const LIMITS_API_URL =
-  "https://script.google.com/macros/s/AKfycbw9uRUe811I05XrPwi1r1nDU045a9WlCUgLYL_WJqeHTaFb5zbcxbKX3veshhZBkz7x/exec";
+  "https://script.google.com/macros/s/AKfycby6r-2bVpW9ZuF_6k6qGS_TGuX30sFJS-tAn-PnnIhWHScgPEBe11OJHi06N7jcUuGM/exec";
 const ALL_ZONES = ["Z1", "Z2", "Z3", "Z4", "Z5"];
 
 const state = {
