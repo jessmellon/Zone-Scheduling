@@ -7,6 +7,25 @@
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
+    <div id="password-gate" class="password-gate">
+      <div class="password-card">
+        <p class="panel-label">Protected Page</p>
+        <h2>Zone Scheduling</h2>
+        <p class="password-copy">Enter the shared password to open the calendar.</p>
+        <form id="password-form" class="password-form">
+          <input
+            id="password-input"
+            class="search-input"
+            type="password"
+            placeholder="Enter password"
+            autocomplete="current-password"
+          />
+          <button class="primary-button" type="submit">Open Site</button>
+        </form>
+        <p id="password-error" class="password-error is-hidden">Incorrect password.</p>
+      </div>
+    </div>
+
     <div class="page-shell">
       <header class="hero">
         <div>
