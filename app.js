@@ -12,6 +12,7 @@ const state = {
   selectedStars: null,
   selectedType: null,
   selectedSent: null,
+  selectedConfirmed: null,
   selectedStaffingDayKey: null,
   selectedEventsDayKey: null,
   selectedEventId: null,
@@ -37,6 +38,7 @@ const activeFilters = document.querySelector("#active-filters");
 const starsFilterList = document.querySelector("#stars-filter-list");
 const typeFilterList = document.querySelector("#type-filter-list");
 const sentFilterList = document.querySelector("#sent-filter-list");
+const confirmedFilterList = document.querySelector("#confirmed-filter-list");
 const selectionDetails = document.querySelector("#selection-details");
 const detailsPanel = selectionDetails ? selectionDetails.closest(".panel") : null;
 const statusBanner = document.querySelector("#status-banner");
@@ -82,6 +84,7 @@ document.querySelector("#reset-filter").addEventListener("click", () => {
   state.selectedStars = null;
   state.selectedType = null;
   state.selectedSent = null;
+  state.selectedConfirmed = null;
   render();
 });
 
@@ -94,13 +97,6 @@ document.querySelector("#events-view-button").addEventListener("click", () => {
 
 document.querySelector("#staffing-view-button").addEventListener("click", () => {
   state.viewMode = "staffing";
-  state.selectedEventId = null;
-  state.selectedEventsDayKey = null;
-  render();
-});
-
-document.querySelector("#confirmed-view-button").addEventListener("click", () => {
-  state.viewMode = "confirmed";
   state.selectedEventId = null;
   state.selectedEventsDayKey = null;
   render();
@@ -281,9 +277,6 @@ function renderViewSwitch() {
   document
     .querySelector("#staffing-view-button")
     .classList.toggle("active", state.viewMode === "staffing");
-  document
-    .querySelector("#confirmed-view-button")
-    .classList.toggle("active", state.viewMode === "confirmed");
 }
 
 function renderHeader() {
@@ -295,7 +288,7 @@ function renderHeader() {
 }
 
 function renderFilters() {
-  const attributeFilteredEvents = getAttributeFilteredEventsForView();
+  const attributeFilteredEvents = getAttributeFilteredEvents();
   const counts =
     isStaffingLikeView()
       ? sumPhotographersByCategory(attributeFilteredEvents)
@@ -317,9 +310,6 @@ function renderFilters() {
     `;
     button.addEventListener("click", () => {
       if (state.viewMode === "staffing") {
-        state.selectedStaffingZone =
-          state.selectedStaffingZone === category ? null : category;
-      } else if (state.viewMode === "confirmed") {
         state.selectedStaffingZone =
           state.selectedStaffingZone === category ? null : category;
       } else {
@@ -349,6 +339,16 @@ function renderAttributeFilters() {
     state.selectedSent = state.selectedSent === value ? null : value;
     render();
   });
+
+  renderAttributeFilterList(
+    confirmedFilterList,
+    ["Confirmed", "Not confirmed"],
+    state.selectedConfirmed,
+    (value) => {
+      state.selectedConfirmed = state.selectedConfirmed === value ? null : value;
+      render();
+    }
+  );
 }
 
 function renderActiveFilters() {
@@ -371,6 +371,9 @@ function renderActiveFilters() {
   }
   if (state.selectedSent) {
     chips.push(`Sent: ${state.selectedSent}`);
+  }
+  if (state.selectedConfirmed) {
+    chips.push(`Confirmed: ${state.selectedConfirmed}`);
   }
 
   if (!chips.length) {
@@ -416,7 +419,7 @@ function renderCalendar() {
   const gridStart = startOfWeek(monthStart);
   const gridEnd = endOfWeek(monthEnd);
   const visibleEvents = getVisibleEvents();
-  const allEvents = getAttributeFilteredEventsForView();
+  const allEvents = getAttributeFilteredEvents();
   const todayKey = formatDateKey(new Date());
 
   calendarGrid.innerHTML = "";
@@ -564,18 +567,12 @@ function renderCalendar() {
 
       cell.querySelectorAll("[data-day-limit]").forEach((input) => {
         input.addEventListener("change", (event) => {
-          if (state.viewMode === "confirmed") {
-            return;
-          }
           setDayLimit(dayKey, event.target.value);
         });
       });
 
       cell.querySelectorAll("[data-zone-limit]").forEach((input) => {
         input.addEventListener("change", (event) => {
-          if (state.viewMode === "confirmed") {
-            return;
-          }
           setZoneLimit(dayKey, event.target.dataset.zone, event.target.value);
         });
       });
@@ -625,7 +622,6 @@ function renderStaffingGroups(dayKey, dayEvents) {
   const dayLimit = getDayLimit(dayKey);
   const dayStatus = getCapacityStatus(totalPhotographers, dayLimit);
   const displayedZones = getDisplayedZones();
-  const limitsEditable = state.viewMode !== "confirmed";
 
   const plannerMarkup = `
     <div class="planner-card planner-total-card ${getCapacityClassName(dayStatus)}">
@@ -642,7 +638,6 @@ function renderStaffingGroups(dayKey, dayEvents) {
           step="1"
           value="${escapeHtml(dayLimit ?? "")}"
           data-day-limit="true"
-          ${limitsEditable ? "" : "disabled"}
         />
       </label>
     </div>
@@ -687,7 +682,6 @@ function renderStaffingGroups(dayKey, dayEvents) {
                 value="${escapeHtml(zoneLimit ?? "")}"
                 data-zone-limit="true"
                 data-zone="${escapeHtml(category)}"
-                ${limitsEditable ? "" : "disabled"}
               />
             </label>
           </div>
@@ -701,7 +695,7 @@ function renderStaffingGroups(dayKey, dayEvents) {
 
 function renderDetails() {
   if (isStaffingLikeView()) {
-    const detailEvents = getAttributeFilteredEventsForView();
+    const detailEvents = getAttributeFilteredEvents();
     const selectedDayEvents = state.selectedStaffingDayKey
       ? detailEvents
           .filter((event) => formatDateKey(event.date) === state.selectedStaffingDayKey)
@@ -759,22 +753,13 @@ function renderDetails() {
 
     selectionDetails.className = "details-card";
     selectionDetails.innerHTML = `
-      <h3>${state.viewMode === "confirmed" ? "Confirmed view" : "Zone staffing view"}</h3>
+      <h3>Zone staffing view</h3>
       <p>
-        ${
-          state.viewMode === "confirmed"
-            ? "Each day shows the total number of confirmed photographers in each zone."
-            : "Each day shows the total number of photographers scheduled in each zone."
-        }
+        Each day shows the total number of photographers scheduled in each zone.
         Click a day to see the schools scheduled there.
       </p>
       <div class="detail-grid">
-        ${renderDetailItem(
-          "Basis",
-          state.viewMode === "confirmed"
-            ? "Confirmed rows only from column W"
-            : "Sum of Photographers column"
-        )}
+        ${renderDetailItem("Basis", "Sum of Photographers column")}
         ${renderDetailItem(
           "Filter",
           state.selectedStaffingZone || "All zones"
@@ -1029,7 +1014,7 @@ function renderColorLegend() {
 }
 
 function getVisibleEvents() {
-  const baseEvents = getAttributeFilteredEventsForView();
+  const baseEvents = getAttributeFilteredEvents();
   const activeCategory =
     isStaffingLikeView() ? state.selectedStaffingZone : state.selectedCategory;
 
@@ -1054,14 +1039,18 @@ function getAttributeFilteredEvents() {
       return false;
     }
 
+    if (state.selectedConfirmed) {
+      const isConfirmed = isConfirmedEvent(event);
+      if (state.selectedConfirmed === "Confirmed" && !isConfirmed) {
+        return false;
+      }
+      if (state.selectedConfirmed === "Not confirmed" && isConfirmed) {
+        return false;
+      }
+    }
+
     return true;
   });
-}
-
-function getAttributeFilteredEventsForView() {
-  return getAttributeFilteredEvents().filter((event) =>
-    state.viewMode === "confirmed" ? isConfirmedEvent(event) : true
-  );
 }
 
 function getUniqueAttributeValues(field) {
@@ -1228,7 +1217,7 @@ function isConfirmedEvent(event) {
 }
 
 function isStaffingLikeView() {
-  return state.viewMode === "staffing" || state.viewMode === "confirmed";
+  return state.viewMode === "staffing";
 }
 
 function getCapacityStatus(actual, limit) {
