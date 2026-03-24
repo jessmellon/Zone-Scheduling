@@ -90,8 +90,16 @@ h1 {
 .calendar-panel {
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  background: var(--surface);
   box-shadow: var(--shadow);
+}
+
+.hero-card,
+.panel {
+  background: var(--surface);
+}
+
+.calendar-panel {
+  background: #efede8;
 }
 
 .hero-card {

@@ -1101,14 +1101,12 @@ function getDisplayedZones() {
 
 function buildCategoryColors(events) {
   const palette = [
-    "#2563eb",
-    "#16a34a",
-    "#dc2626",
-    "#9333ea",
-    "#ea580c",
-    "#0f766e",
-    "#c026d3",
-    "#65a30d",
+    "#2f2f2f",
+    "#5a5a5a",
+    "#7a7a7a",
+    "#9a9a9a",
+    "#b8b8b8",
+    "#d0d0d0",
   ];
 
   const categories = [...new Set(events.map((event) => event.category))].sort();
