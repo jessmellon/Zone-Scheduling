@@ -416,7 +416,7 @@ function renderCalendar() {
         ? renderStaffingGroups(dayKey, allDayEvents)
         : renderEventGroups(dayEvents);
     const hasNote = hasDayNote(dayKey);
-    const holidayName = getHolidayName(dayKey);
+    const holidayNames = getHolidayNames(dayKey);
 
     cell.innerHTML = `
       <div class="day-heading">
@@ -433,8 +433,8 @@ function renderCalendar() {
         )}</div>
       </div>
       ${
-        holidayName
-          ? `<div class="holiday-chip">${escapeHtml(holidayName)}</div>`
+        holidayNames.length
+          ? `<div class="holiday-chip">${escapeHtml(holidayNames.join(" • "))}</div>`
           : ""
       }
       <div class="day-groups">${groupsMarkup}</div>
@@ -809,14 +809,14 @@ function renderNotesPanel() {
   if (state.selectedNoteZone) {
     noteDateLabel.textContent += ` • ${state.selectedNoteZone}`;
   }
-  const holidayName = getHolidayName(state.selectedNoteDateKey);
+  const holidayNames = getHolidayNames(state.selectedNoteDateKey);
   dayNoteInput.disabled = false;
   const noteKey = getSelectedNoteStorageKey();
   const noteValue = state.notes[noteKey] || "";
   dayNoteInput.value = noteValue;
-  holidayNote.textContent = holidayName ? `Holiday: ${holidayName}` : "";
-  holidayNote.classList.toggle("is-hidden", !holidayName);
-  dayNotesPanel.classList.toggle("has-note", Boolean(noteValue.trim()) || Boolean(holidayName));
+  holidayNote.textContent = holidayNames.length ? `Holiday: ${holidayNames.join(" • ")}` : "";
+  holidayNote.classList.toggle("is-hidden", !holidayNames.length);
+  dayNotesPanel.classList.toggle("has-note", Boolean(noteValue.trim()) || holidayNames.length > 0);
   currentNoteMeta.textContent = buildCurrentNoteMeta(noteKey);
   renderNoteHistory(noteKey);
   updateNoteSaveButtonState();
@@ -1892,14 +1892,14 @@ function buildCurrentNoteMeta(dateKey) {
   })}`;
 }
 
-function getHolidayName(dateKey) {
+function getHolidayNames(dateKey) {
   const date = parseDateKey(dateKey);
   const year = date.getFullYear();
-  const holidays = buildUsFederalHolidayMap(year);
-  return holidays[dateKey] || "";
+  const holidays = buildUsHolidayMap(year);
+  return holidays[dateKey] || [];
 }
 
-function buildUsFederalHolidayMap(year) {
+function buildUsHolidayMap(year) {
   const holidays = {};
 
   addHoliday(holidays, observedDate(year, 0, 1), "New Year's Day");
@@ -1913,12 +1913,78 @@ function buildUsFederalHolidayMap(year) {
   addHoliday(holidays, observedDate(year, 10, 11), "Veterans Day");
   addHoliday(holidays, nthWeekdayOfMonth(year, 10, 4, 4), "Thanksgiving");
   addHoliday(holidays, observedDate(year, 11, 25), "Christmas Day");
+  addSecondaryHolidayEntries(holidays, year);
 
   return holidays;
 }
 
 function addHoliday(map, date, label) {
-  map[formatDateKey(date)] = label;
+  const key = formatDateKey(date);
+  if (!map[key]) {
+    map[key] = [];
+  }
+  map[key].push(label);
+}
+
+function addSecondaryHolidayEntries(map, year) {
+  const entries = {
+    2025: [
+      ["2025-01-29", "Lunar New Year"],
+      ["2025-03-30", "Eid al-Fitr"],
+      ["2025-03-31", "Eid al-Fitr"],
+      ["2025-10-20", "Diwali"],
+      ["2025-09-23", "Rosh Hashanah"],
+      ["2025-09-24", "Rosh Hashanah"],
+      ["2025-10-02", "Yom Kippur"],
+    ],
+    2026: [
+      ["2026-02-17", "Lunar New Year"],
+      ["2026-03-20", "Eid al-Fitr"],
+      ["2026-09-12", "Rosh Hashanah"],
+      ["2026-09-13", "Rosh Hashanah"],
+      ["2026-09-21", "Yom Kippur"],
+      ["2026-11-08", "Diwali"],
+    ],
+    2027: [
+      ["2027-02-06", "Lunar New Year"],
+      ["2027-03-10", "Eid al-Fitr"],
+      ["2027-10-02", "Rosh Hashanah"],
+      ["2027-10-03", "Rosh Hashanah"],
+      ["2027-10-11", "Yom Kippur"],
+      ["2027-10-28", "Diwali"],
+    ],
+    2028: [
+      ["2028-01-26", "Lunar New Year"],
+      ["2028-02-27", "Eid al-Fitr"],
+      ["2028-09-21", "Rosh Hashanah"],
+      ["2028-09-22", "Rosh Hashanah"],
+      ["2028-09-30", "Yom Kippur"],
+      ["2028-10-17", "Diwali"],
+    ],
+    2029: [
+      ["2029-02-13", "Lunar New Year"],
+      ["2029-02-15", "Eid al-Fitr"],
+      ["2029-09-10", "Rosh Hashanah"],
+      ["2029-09-11", "Rosh Hashanah"],
+      ["2029-09-19", "Yom Kippur"],
+      ["2029-11-05", "Diwali"],
+    ],
+    2030: [
+      ["2030-02-03", "Lunar New Year"],
+      ["2030-02-05", "Eid al-Fitr"],
+      ["2030-09-28", "Rosh Hashanah"],
+      ["2030-09-29", "Rosh Hashanah"],
+      ["2030-10-07", "Yom Kippur"],
+      ["2030-10-25", "Diwali"],
+    ],
+  };
+
+  (entries[year] || []).forEach(([dateKey, label]) => {
+    if (!map[dateKey]) {
+      map[dateKey] = [];
+    }
+    map[dateKey].push(label);
+  });
 }
 
 function observedDate(year, monthIndex, day) {
