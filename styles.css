@@ -185,10 +185,25 @@ h1 {
   margin-top: 24px;
 }
 
+.layout.full-month-layout {
+  grid-template-columns: 1fr;
+}
+
 .sidebar {
   display: flex;
   flex-direction: column;
   gap: 20px;
+}
+
+.layout.full-month-layout .sidebar {
+  order: 2;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  align-items: start;
+}
+
+.layout.full-month-layout .calendar-panel {
+  order: 1;
 }
 
 .panel {
@@ -552,6 +567,13 @@ button.search-result-item:focus-visible {
 
 .calendar-grid {
   min-height: 760px;
+}
+
+.calendar-grid.full-month-layout {
+  grid-template-columns: repeat(var(--month-day-count, 31), minmax(170px, 1fr));
+  min-height: auto;
+  overflow-x: auto;
+  padding-bottom: 8px;
 }
 
 .day-cell {

@@ -15,6 +15,7 @@ const state = {
   selectedType: null,
   selectedSent: null,
   selectedConfirmed: null,
+  layoutMode: "standard",
   selectedStaffingDayKey: null,
   selectedStaffingZoneKey: null,
   selectedEventsDayKey: null,
@@ -39,6 +40,8 @@ const monthLabel = document.querySelector("#month-label");
 const calendarGrid = document.querySelector("#calendar-grid");
 const filterList = document.querySelector("#filter-list");
 const activeFilters = document.querySelector("#active-filters");
+const layoutRoot = document.querySelector(".layout");
+const weekdayRow = document.querySelector(".weekday-row");
 const starsFilterList = document.querySelector("#stars-filter-list");
 const typeFilterList = document.querySelector("#type-filter-list");
 const sentFilterList = document.querySelector("#sent-filter-list");
@@ -107,6 +110,16 @@ document.querySelector("#staffing-view-button").addEventListener("click", () => 
   state.viewMode = "staffing";
   state.selectedEventId = null;
   state.selectedEventsDayKey = null;
+  render();
+});
+
+document.querySelector("#standard-layout-button").addEventListener("click", () => {
+  state.layoutMode = "standard";
+  render();
+});
+
+document.querySelector("#full-month-layout-button").addEventListener("click", () => {
+  state.layoutMode = "full-month";
   render();
 });
 
@@ -300,6 +313,8 @@ function render() {
   }
 
   renderViewSwitch();
+  renderLayoutSwitch();
+  renderLayoutMode();
   renderHeader();
   renderFilters();
   renderActiveFilters();
@@ -316,6 +331,22 @@ function renderViewSwitch() {
   document
     .querySelector("#staffing-view-button")
     .classList.toggle("active", state.viewMode === "staffing");
+}
+
+function renderLayoutSwitch() {
+  document
+    .querySelector("#standard-layout-button")
+    .classList.toggle("active", state.layoutMode === "standard");
+  document
+    .querySelector("#full-month-layout-button")
+    .classList.toggle("active", state.layoutMode === "full-month");
+}
+
+function renderLayoutMode() {
+  const isFullMonthLayout = state.layoutMode === "full-month";
+  layoutRoot?.classList.toggle("full-month-layout", isFullMonthLayout);
+  calendarGrid.classList.toggle("full-month-layout", isFullMonthLayout);
+  weekdayRow?.classList.toggle("is-hidden", isFullMonthLayout);
 }
 
 function renderHeader() {
@@ -464,17 +495,21 @@ function renderAttributeFilterList(container, values, activeValue, onSelect) {
 function renderCalendar() {
   const monthStart = startOfMonth(state.currentMonth);
   const monthEnd = endOfMonth(state.currentMonth);
+  const isFullMonthLayout = state.layoutMode === "full-month";
   const gridStart = startOfWeek(monthStart);
   const gridEnd = endOfWeek(monthEnd);
+  const rangeStart = isFullMonthLayout ? monthStart : gridStart;
+  const rangeEnd = isFullMonthLayout ? monthEnd : gridEnd;
   const visibleEvents = getVisibleEvents();
   const allEvents = getAttributeFilteredEvents();
   const todayKey = formatDateKey(new Date());
 
   calendarGrid.innerHTML = "";
+  calendarGrid.style.setProperty("--month-day-count", String(monthEnd.getDate()));
 
   for (
-    let cursor = new Date(gridStart);
-    cursor <= gridEnd;
+    let cursor = new Date(rangeStart);
+    cursor <= rangeEnd;
     cursor = addDays(cursor, 1)
   ) {
     const dayKey = formatDateKey(cursor);
