@@ -197,13 +197,18 @@ h1 {
 
 .layout.full-month-layout .sidebar {
   order: 2;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  display: flex;
+  flex-direction: column;
   align-items: start;
 }
 
 .layout.full-month-layout .calendar-panel {
   order: 1;
+}
+
+.layout.full-month-layout .calendar-panel {
+  padding-left: 8px;
+  padding-right: 8px;
 }
 
 .panel {
