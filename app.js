@@ -624,17 +624,6 @@ function renderCalendar() {
         });
       });
 
-      cell.querySelectorAll("[data-day-limit]").forEach((input) => {
-        input.addEventListener("change", (event) => {
-          setDayLimit(dayKey, event.target.value);
-        });
-      });
-
-      cell.querySelectorAll("[data-zone-limit]").forEach((input) => {
-        input.addEventListener("change", (event) => {
-          setZoneLimit(dayKey, event.target.dataset.zone, event.target.value);
-        });
-      });
     }
 
     calendarGrid.appendChild(cell);
@@ -684,29 +673,14 @@ function renderStaffingGroups(dayKey, dayEvents) {
 
   const plannerMarkup = `
     <div class="planner-card planner-total-card ${getCapacityClassName(dayStatus)}">
-      <div class="planner-row">
-        <span class="planner-title">Day total</span>
-        <span class="planner-total-number">${totalPhotographers}</span>
-      </div>
-      <label class="limit-field">
-        <span class="limit-label">Daily limit</span>
-        <input
-          class="limit-input"
-          type="number"
-          min="0"
-          step="1"
-          value="${escapeHtml(dayLimit ?? "")}"
-          data-day-limit="true"
-        />
-      </label>
+      <span class="planner-total-number">${totalPhotographers}</span>
     </div>
   `;
 
   const zoneTotals = buildZoneTotals(dayEvents);
-    const zoneMarkup = displayedZones
+  const zoneMarkup = displayedZones
     .map((category) => {
       const value = zoneTotals.get(category)?.photographers || 0;
-      const totalEvents = zoneTotals.get(category)?.schools || 0;
       const zoneLimit = getZoneLimit(dayKey, category);
       const zoneStatus = getCapacityStatus(value, zoneLimit);
       return `
@@ -731,12 +705,7 @@ function renderStaffingGroups(dayKey, dayEvents) {
             style="border-left-color:${getCategoryColor(category)}"
             data-zone-card="${escapeHtml(category)}"
           >
-            <span class="event-title">${value} Photog${
-              value === 1 ? "" : "s"
-            }</span>
-            <span class="event-meta">${totalEvents} school${
-              totalEvents === 1 ? "" : "s"
-            }</span>
+            <span class="summary-number">${value}</span>
           </div>
         </div>
       `;
@@ -863,12 +832,41 @@ function renderDetails() {
             year: "numeric",
           })
         )}</h3>
-        <p>${selectedDayEvents.length} scheduled school${
-          selectedDayEvents.length === 1 ? "" : "s"
-        }${state.selectedStaffingZone ? ` across all zones while filtered to ${state.selectedStaffingZone}` : ""}.</p>
+        <div class="detail-grid">
+          ${renderDetailItem(
+            "Schools",
+            `${selectedDayEvents.length} scheduled school${
+              selectedDayEvents.length === 1 ? "" : "s"
+            }`
+          )}
+          ${renderDetailItem(
+            "Photogs",
+            `${getTotalPhotographers(selectedDayEvents)} total`
+          )}
+        </div>
+        <div class="detail-actions">
+          <label class="limit-field detail-limit-field">
+            <span class="limit-label">Daily limit</span>
+            <input
+              id="details-day-limit"
+              class="limit-input"
+              type="number"
+              min="0"
+              step="1"
+              value="${escapeHtml(getDayLimit(state.selectedStaffingDayKey) ?? "")}"
+            />
+          </label>
+        </div>
         <div class="detail-school-list">${itemsMarkup}</div>
         ${renderColorLegend()}
       `;
+
+      const detailsDayLimit = document.querySelector("#details-day-limit");
+      if (detailsDayLimit) {
+        detailsDayLimit.addEventListener("change", (event) => {
+          setDayLimit(state.selectedStaffingDayKey, event.target.value);
+        });
+      }
       return;
     }
 

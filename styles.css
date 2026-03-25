@@ -834,8 +834,11 @@ button.search-result-item:focus-visible {
 }
 
 .planner-total-number {
-  font-size: 0.86rem;
+  display: block;
+  font-size: 1.35rem;
   font-weight: 700;
+  line-height: 1;
+  text-align: center;
 }
 
 .planner-total-card .limit-label,
@@ -899,6 +902,14 @@ button.search-result-item:focus-visible {
   margin-top: 1px;
   color: var(--muted);
   font-size: 0.68rem;
+}
+
+.summary-number {
+  display: block;
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
 }
 
 .status-banner {
