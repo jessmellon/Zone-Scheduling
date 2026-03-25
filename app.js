@@ -1603,43 +1603,12 @@ async function setConfirmedStatus(eventId, confirmed) {
 
   try {
     await persistConfirmed(event.rowNumber, confirmed);
-    scheduleConfirmedRefresh();
+    setStatus("");
   } catch (error) {
     delete state.confirmedOverrides[event.rowNumber];
     event.confirmed = previousValue;
     setStatus(`Unable to update confirmation: ${error.message}`);
     render();
-  }
-}
-
-let confirmedRefreshTimer = null;
-
-function scheduleConfirmedRefresh() {
-  if (confirmedRefreshTimer) {
-    window.clearTimeout(confirmedRefreshTimer);
-  }
-
-  confirmedRefreshTimer = window.setTimeout(() => {
-    confirmedRefreshTimer = null;
-    refreshEventsFromSheet();
-  }, 2500);
-}
-
-async function refreshEventsFromSheet() {
-  try {
-    const sheetData = await loadGvizData();
-    const events = applyConfirmedOverrides(buildEvents(sheetData));
-
-    if (!events.length) {
-      return;
-    }
-
-    state.events = events.sort((left, right) => left.date - right.date);
-    state.categoryColors = buildCategoryColors(state.events);
-    lastUpdated.textContent = `Loaded ${state.events.length} calendar entries`;
-    render();
-  } catch (error) {
-    console.error(error);
   }
 }
 
