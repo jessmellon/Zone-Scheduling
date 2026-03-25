@@ -16,6 +16,7 @@ const state = {
   selectedSent: null,
   selectedConfirmed: null,
   selectedStaffingDayKey: null,
+  selectedStaffingZoneKey: null,
   selectedEventsDayKey: null,
   selectedEventId: null,
   focusedDayKey: null,
@@ -590,6 +591,7 @@ function renderCalendar() {
         if (
           event.target.closest("[data-note-day]") ||
           event.target.closest("[data-zone-note]") ||
+          event.target.closest("[data-zone-card]") ||
           event.target.closest("[data-day-limit]") ||
           event.target.closest("[data-zone-limit]")
         ) {
@@ -597,6 +599,7 @@ function renderCalendar() {
         }
 
         state.selectedStaffingDayKey = dayKey;
+        state.selectedStaffingZoneKey = null;
         renderDetails();
         renderCalendar();
       });
@@ -608,6 +611,16 @@ function renderCalendar() {
           state.selectedNoteZone = button.dataset.zoneNote;
           renderNotesPanel();
           scrollNotesPanelIntoView();
+        });
+      });
+
+      cell.querySelectorAll("[data-zone-card]").forEach((button) => {
+        button.addEventListener("click", () => {
+          state.selectedStaffingDayKey = dayKey;
+          state.selectedStaffingZoneKey = button.dataset.zoneCard;
+          renderDetails();
+          renderCalendar();
+          scrollDetailsIntoView();
         });
       });
 
@@ -709,8 +722,14 @@ function renderStaffingGroups(dayKey, dayEvents) {
             </button>
           </div>
           <div
-            class="event-pill summary-pill ${getCapacityClassName(zoneStatus)}"
+            class="event-pill summary-pill zone-summary-card ${getCapacityClassName(zoneStatus)}${
+              state.selectedStaffingDayKey === dayKey &&
+              state.selectedStaffingZoneKey === category
+                ? " is-selected"
+                : ""
+            }"
             style="border-left-color:${getCategoryColor(category)}"
+            data-zone-card="${escapeHtml(category)}"
           >
             <span class="event-title">${value} Photog${
               value === 1 ? "" : "s"
@@ -718,18 +737,6 @@ function renderStaffingGroups(dayKey, dayEvents) {
             <span class="event-meta">${totalEvents} school${
               totalEvents === 1 ? "" : "s"
             }</span>
-            <label class="limit-field zone-limit-field">
-              <span class="limit-label">Limit</span>
-              <input
-                class="limit-input"
-                type="number"
-                min="0"
-                step="1"
-                value="${escapeHtml(zoneLimit ?? "")}"
-                data-zone-limit="true"
-                data-zone="${escapeHtml(category)}"
-              />
-            </label>
           </div>
         </div>
       `;
@@ -759,6 +766,74 @@ function renderDetails() {
 
     if (state.selectedStaffingDayKey) {
       const selectedDate = parseDateKey(state.selectedStaffingDayKey);
+      const selectedZone = state.selectedStaffingZoneKey;
+
+      if (selectedZone) {
+        const zoneEvents = selectedDayEvents.filter((event) => event.category === selectedZone);
+        const zoneLimit = getZoneLimit(state.selectedStaffingDayKey, selectedZone);
+        const zonePhotogs = getTotalPhotographers(zoneEvents);
+
+        selectionDetails.className = "details-card";
+        selectionDetails.innerHTML = `
+          <h3>${escapeHtml(
+            `${selectedDate.toLocaleDateString(undefined, {
+              weekday: "long",
+              month: "long",
+              day: "numeric",
+              year: "numeric",
+            })} • ${selectedZone}`
+          )}</h3>
+          <div class="detail-grid">
+            ${renderDetailItem("Schools", String(zoneEvents.length))}
+            ${renderDetailItem("Photogs", String(zonePhotogs))}
+          </div>
+          <div class="detail-actions">
+            <label class="limit-field detail-limit-field">
+              <span class="limit-label">Limit</span>
+              <input
+                id="details-zone-limit"
+                class="limit-input"
+                type="number"
+                min="0"
+                step="1"
+                value="${escapeHtml(zoneLimit ?? "")}"
+              />
+            </label>
+          </div>
+          <div class="detail-school-list">
+            ${
+              zoneEvents.length
+                ? zoneEvents
+                    .map((event) => {
+                      return `
+                        <div class="detail-school-item">
+                          <strong>${escapeHtml(event.schoolName)}</strong>
+                          <span>${escapeHtml(
+                            [event.type, `${getPhotographerCount(event)} Photog${
+                              getPhotographerCount(event) === 1 ? "" : "s"
+                            }`]
+                              .filter(Boolean)
+                              .join(" • ")
+                          )}</span>
+                        </div>
+                      `;
+                    })
+                    .join("")
+                : '<p class="details-empty-copy">No schools scheduled in this zone.</p>'
+            }
+          </div>
+          ${renderColorLegend()}
+        `;
+
+        const detailsZoneLimit = document.querySelector("#details-zone-limit");
+        if (detailsZoneLimit) {
+          detailsZoneLimit.addEventListener("change", (event) => {
+            setZoneLimit(state.selectedStaffingDayKey, selectedZone, event.target.value);
+          });
+        }
+        return;
+      }
+
       const itemsMarkup = selectedDayEvents.length
         ? selectedDayEvents
             .map((event) => {

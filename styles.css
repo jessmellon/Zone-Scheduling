@@ -760,6 +760,14 @@ button.search-result-item:focus-visible {
   outline: none;
 }
 
+.zone-summary-card {
+  cursor: pointer;
+}
+
+.zone-summary-card.is-selected {
+  box-shadow: inset 0 0 0 2px rgba(24, 102, 75, 0.65);
+}
+
 .event-pill.is-selected {
   box-shadow: inset 0 0 0 1px rgba(24, 102, 75, 0.4);
 }
