@@ -28,6 +28,7 @@ const state = {
   noteMeta: {},
   noteHistory: {},
   dateHistory: {},
+  confirmedOverrides: {},
   selectedNoteDateKey: null,
   selectedNoteZone: null,
   saveSequence: 0,
@@ -130,7 +131,7 @@ async function loadCalendar() {
 
   try {
     const [sheetData, sharedData] = await Promise.all([loadGvizData(), loadSharedData()]);
-    const events = buildEvents(sheetData);
+    const events = applyConfirmedOverrides(buildEvents(sheetData));
 
     if (!events.length) {
       throw new Error("No dated rows were found in the Dates tab.");
@@ -1396,6 +1397,29 @@ function parseSourceRow(cell) {
   return Number.isFinite(parsed) && parsed > 1 ? parsed : null;
 }
 
+function applyConfirmedOverrides(events) {
+  return events.map((event) => {
+    if (!event.rowNumber) {
+      return event;
+    }
+
+    const override = state.confirmedOverrides[event.rowNumber];
+    if (override === undefined) {
+      return event;
+    }
+
+    if (isConfirmedEvent(event) === override) {
+      delete state.confirmedOverrides[event.rowNumber];
+      return event;
+    }
+
+    return {
+      ...event,
+      confirmed: override,
+    };
+  });
+}
+
 function isStaffingLikeView() {
   return state.viewMode === "staffing";
 }
@@ -1543,15 +1567,49 @@ async function setConfirmedStatus(eventId, confirmed) {
   }
 
   const previousValue = event.confirmed;
+  state.confirmedOverrides[event.rowNumber] = confirmed;
   event.confirmed = confirmed;
   render();
 
   try {
     await persistConfirmed(event.rowNumber, confirmed);
+    scheduleConfirmedRefresh();
   } catch (error) {
+    delete state.confirmedOverrides[event.rowNumber];
     event.confirmed = previousValue;
     setStatus(`Unable to update confirmation: ${error.message}`);
     render();
+  }
+}
+
+let confirmedRefreshTimer = null;
+
+function scheduleConfirmedRefresh() {
+  if (confirmedRefreshTimer) {
+    window.clearTimeout(confirmedRefreshTimer);
+  }
+
+  confirmedRefreshTimer = window.setTimeout(() => {
+    confirmedRefreshTimer = null;
+    refreshEventsFromSheet();
+  }, 2500);
+}
+
+async function refreshEventsFromSheet() {
+  try {
+    const sheetData = await loadGvizData();
+    const events = applyConfirmedOverrides(buildEvents(sheetData));
+
+    if (!events.length) {
+      return;
+    }
+
+    state.events = events.sort((left, right) => left.date - right.date);
+    state.categoryColors = buildCategoryColors(state.events);
+    lastUpdated.textContent = `Loaded ${state.events.length} calendar entries`;
+    render();
+  } catch (error) {
+    console.error(error);
   }
 }
 
