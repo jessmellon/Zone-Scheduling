@@ -713,7 +713,7 @@ function renderStaffingGroups(dayKey, dayEvents) {
     })
     .join("");
 
-  return `${plannerMarkup}${zoneMarkup}`;
+  return `${zoneMarkup}${plannerMarkup}`;
 }
 
 function renderDetails() {
@@ -755,7 +755,7 @@ function renderDetails() {
           )}</h3>
           <div class="detail-grid">
             ${renderDetailItem("Schools", String(zoneEvents.length))}
-            ${renderDetailItem("Photogs", String(zonePhotogs))}
+            ${renderDetailItem("Photographers", String(zonePhotogs))}
           </div>
           <div class="detail-actions">
             <label class="limit-field detail-limit-field">
@@ -779,7 +779,7 @@ function renderDetails() {
                         <div class="detail-school-item">
                           <strong>${escapeHtml(event.schoolName)}</strong>
                           <span>${escapeHtml(
-                            [event.type, `${getPhotographerCount(event)} Photog${
+                            [event.type, `${getPhotographerCount(event)} Photographer${
                               getPhotographerCount(event) === 1 ? "" : "s"
                             }`]
                               .filter(Boolean)
@@ -811,7 +811,7 @@ function renderDetails() {
                 <div class="detail-school-item">
                   <strong>${escapeHtml(event.schoolName)}</strong>
                   <span>${escapeHtml(
-                    [event.category, event.type, `${getPhotographerCount(event)} Photog${
+                    [event.category, event.type, `${getPhotographerCount(event)} Photographer${
                       getPhotographerCount(event) === 1 ? "" : "s"
                     }`]
                       .filter(Boolean)
@@ -841,7 +841,7 @@ function renderDetails() {
             }`
           )}
           ${renderDetailItem(
-            "Photogs",
+            "Photographers",
             `${getTotalPhotographers(selectedDayEvents)} total`
           )}
         </div>

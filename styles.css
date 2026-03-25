@@ -196,8 +196,8 @@ h1 {
 }
 
 .panel.has-note {
-  background: rgba(255, 232, 121, 0.24);
-  border-color: rgba(211, 171, 19, 0.45);
+  background: rgba(24, 102, 75, 0.1);
+  border-color: rgba(24, 102, 75, 0.35);
 }
 
 .panel-row,
@@ -672,8 +672,8 @@ button.search-result-item:focus-visible {
 }
 
 .zone-note-chip.has-note {
-  border-color: rgba(211, 171, 19, 0.55);
-  background: rgba(255, 232, 121, 0.28);
+  border-color: rgba(24, 102, 75, 0.45);
+  background: rgba(24, 102, 75, 0.12);
   color: var(--text);
 }
 
@@ -718,9 +718,9 @@ button.search-result-item:focus-visible {
   min-width: 36px;
   min-height: 36px;
   padding: 4px 8px;
-  border: 2px solid #d3ab13;
+  border: 2px solid rgba(24, 102, 75, 0.7);
   border-radius: 12px;
-  background: rgba(255, 232, 121, 0.22);
+  background: rgba(24, 102, 75, 0.14);
 }
 
 .day-groups {
@@ -813,11 +813,14 @@ button.search-result-item:focus-visible {
 }
 
 .planner-total-card.capacity-warning,
-.planner-total-card.capacity-danger,
+.planner-total-card.capacity-danger {
+  border-color: var(--line);
+  color: var(--text);
+}
+
 .planner-total-card.capacity-critical {
-  background: #111111;
-  color: #ffffff;
-  border-color: rgba(17, 17, 17, 0.9);
+  border-color: rgba(70, 8, 8, 0.92);
+  color: #fff8f8;
 }
 
 .planner-row {
@@ -846,6 +849,11 @@ button.search-result-item:focus-visible {
 .planner-total-card .planner-total,
 .planner-total-card .planner-total-number {
   color: #ffffff;
+}
+
+.planner-total-card.capacity-warning .planner-total-number,
+.planner-total-card.capacity-danger .planner-total-number {
+  color: var(--text);
 }
 
 .planner-total-card .limit-input {
