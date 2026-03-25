@@ -690,9 +690,11 @@ function renderStaffingGroups(dayKey, dayEvents) {
   const displayedZones = getDisplayedZones();
 
   const plannerMarkup = `
-    <div class="planner-card planner-total-card ${getCapacityClassName(dayStatus)}">
+    <div class="group-block">
       <div class="group-label">Day Total</div>
-      <span class="planner-total-number">${totalPhotographers}</span>
+      <div class="planner-card planner-total-card ${getCapacityClassName(dayStatus)}">
+        <span class="planner-total-number">${totalPhotographers}</span>
+      </div>
     </div>
   `;
 
