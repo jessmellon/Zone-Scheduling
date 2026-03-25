@@ -1,7 +1,7 @@
 const SHEET_GVIZ_URL =
   "https://docs.google.com/spreadsheets/d/1_KPdGkIe-tQrKEFxqAfJL87VvX73aEPuwVW5G_b4zOI/gviz/tq?tqx=out:json&sheet=Copy%20of%20Dates";
 const LIMITS_API_URL =
-  "https://script.google.com/macros/s/AKfycby6r-2bVpW9ZuF_6k6qGS_TGuX30sFJS-tAn-PnnIhWHScgPEBe11OJHi06N7jcUuGM/exec";
+  "https://script.google.com/macros/s/AKfycby7QBZWkaCNObbttX7DpGhYQsVe2Ou1-RHO-v28RAIMGU3T1CiM_bErG43PRdWfPrVg/exec";
 const ALL_ZONES = ["Z1", "Z2", "Z3", "Z4", "Z5"];
 const SITE_PASSWORD = "VOS4437";
 const PASSWORD_STORAGE_KEY = "zone_scheduling_unlocked";
@@ -257,6 +257,7 @@ function buildEvents(sheetData) {
     photographers: findHeaderIndex(headers, ["Photographers"]),
     type: findHeaderIndex(headers, ["Type"]),
     confirmed: findHeaderIndex(headers, ["Confirmed", "Roosted", "Added To Roosted", "Added to Roosted"]),
+    rowNumber: findHeaderIndex(headers, ["RowNumber", "Source Row", "Row"]),
   };
 
   return rows
@@ -285,6 +286,7 @@ function buildEvents(sheetData) {
         photographers: readCell(row.c, indexes.photographers),
         type: readCell(row.c, indexes.type),
         confirmed: parseConfirmedCell(readCell(row.c, indexes.confirmed, true)),
+        rowNumber: parseSourceRow(readCell(row.c, indexes.rowNumber, true)),
       };
     })
     .filter(Boolean);
@@ -892,9 +894,32 @@ function renderDetails() {
       ${renderDetailItem("Stars", event.stars)}
       ${renderDetailItem("Type", event.type)}
       ${renderDetailItem("Sent?", event.sent)}
+      ${renderDetailItem("Confirmed", isConfirmedEvent(event) ? "Yes" : "No")}
       ${renderDetailItem("Photographers", event.photographers)}
     </div>
+    <div class="detail-actions">
+      <button
+        class="primary-button"
+        type="button"
+        data-confirm-toggle="${escapeHtml(event.id)}"
+        ${event.rowNumber ? "" : "disabled"}
+      >
+        ${isConfirmedEvent(event) ? "Mark Not Confirmed" : "Mark Confirmed"}
+      </button>
+      ${
+        event.rowNumber
+          ? ""
+          : '<p class="details-empty-copy">Add a RowNumber column from Table Main Tab before confirming from the site.</p>'
+      }
+    </div>
   `;
+
+  const confirmButton = selectionDetails.querySelector("[data-confirm-toggle]");
+  if (confirmButton) {
+    confirmButton.addEventListener("click", () => {
+      setConfirmedStatus(event.id, !isConfirmedEvent(event));
+    });
+  }
 }
 
 function renderNotesPanel() {
@@ -1282,6 +1307,22 @@ function parseConfirmedCell(cell) {
   return normalized === "true" || normalized === "yes" || normalized === "1";
 }
 
+function parseSourceRow(cell) {
+  if (!cell) {
+    return null;
+  }
+
+  const rawValue =
+    cell.v !== null && cell.v !== undefined
+      ? cell.v
+      : typeof cell.f === "string"
+        ? cell.f.trim()
+        : null;
+
+  const parsed = Number.parseInt(String(rawValue || "").trim(), 10);
+  return Number.isFinite(parsed) && parsed > 1 ? parsed : null;
+}
+
 function isStaffingLikeView() {
   return state.viewMode === "staffing";
 }
@@ -1417,6 +1458,26 @@ async function setZoneLimit(dayKey, zone, rawValue) {
       state.limits.zones[dayKey][zone] = previousValue;
     }
     setStatus(`Unable to save zone limit: ${error.message}`);
+    render();
+  }
+}
+
+async function setConfirmedStatus(eventId, confirmed) {
+  const event = state.events.find((item) => item.id === eventId);
+  if (!event || !event.rowNumber) {
+    setStatus("Unable to update confirmation: missing source row number.");
+    return;
+  }
+
+  const previousValue = event.confirmed;
+  event.confirmed = confirmed;
+  render();
+
+  try {
+    await persistConfirmed(event.rowNumber, confirmed);
+  } catch (error) {
+    event.confirmed = previousValue;
+    setStatus(`Unable to update confirmation: ${error.message}`);
     render();
   }
 }
@@ -1934,6 +1995,29 @@ async function persistNote(dateKey, note) {
       dateKey,
       zone: "NOTE",
       note: note || "",
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`save failed with status ${response.status}`);
+  }
+
+  const payload = await response.json();
+  if (!payload.ok) {
+    throw new Error(payload.error || "unknown save error");
+  }
+}
+
+async function persistConfirmed(rowNumber, confirmed) {
+  const response = await fetch(LIMITS_API_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "text/plain;charset=utf-8",
+    },
+    body: JSON.stringify({
+      action: "setConfirmed",
+      rowNumber,
+      confirmed,
     }),
   });
 

@@ -978,6 +978,13 @@ button.search-result-item:focus-visible {
   color: var(--muted);
 }
 
+.detail-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+}
+
 .nav-button,
 .ghost-button,
 .primary-button {
