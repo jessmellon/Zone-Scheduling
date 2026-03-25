@@ -691,6 +691,7 @@ function renderStaffingGroups(dayKey, dayEvents) {
 
   const plannerMarkup = `
     <div class="planner-card planner-total-card ${getCapacityClassName(dayStatus)}">
+      <div class="group-label">Day Total</div>
       <span class="planner-total-number">${totalPhotographers}</span>
     </div>
   `;
