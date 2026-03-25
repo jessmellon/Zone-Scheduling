@@ -670,6 +670,19 @@ function renderEventGroups(dayEvents) {
     .join("");
 }
 
+function renderDetailSchoolLink(schoolName, metaText) {
+  return `
+    <button
+      class="detail-school-item detail-school-link"
+      type="button"
+      data-detail-school="${escapeHtml(schoolName)}"
+    >
+      <strong>${escapeHtml(schoolName)}</strong>
+      <span>${escapeHtml(metaText)}</span>
+    </button>
+  `;
+}
+
 function renderStaffingGroups(dayKey, dayEvents) {
   const totalPhotographers = getTotalPhotographers(dayEvents);
   const dayLimit = getDayLimit(dayKey);
@@ -779,18 +792,14 @@ function renderDetails() {
               zoneEvents.length
                 ? zoneEvents
                     .map((event) => {
-                      return `
-                        <div class="detail-school-item">
-                          <strong>${escapeHtml(event.schoolName)}</strong>
-                          <span>${escapeHtml(
-                            [event.type, `${getPhotographerCount(event)} Photographer${
-                              getPhotographerCount(event) === 1 ? "" : "s"
-                            }`]
-                              .filter(Boolean)
-                              .join(" • ")
-                          )}</span>
-                        </div>
-                      `;
+                      return renderDetailSchoolLink(
+                        event.schoolName,
+                        [event.type, `${getPhotographerCount(event)} Photographer${
+                          getPhotographerCount(event) === 1 ? "" : "s"
+                        }`]
+                          .filter(Boolean)
+                          .join(" • ")
+                      );
                     })
                     .join("")
                 : '<p class="details-empty-copy">No schools scheduled in this zone.</p>'
@@ -805,24 +814,21 @@ function renderDetails() {
             setZoneLimit(state.selectedStaffingDayKey, selectedZone, event.target.value);
           });
         }
+        bindDetailSchoolLinks();
         return;
       }
 
       const itemsMarkup = selectedDayEvents.length
         ? selectedDayEvents
             .map((event) => {
-              return `
-                <div class="detail-school-item">
-                  <strong>${escapeHtml(event.schoolName)}</strong>
-                  <span>${escapeHtml(
-                    [event.category, event.type, `${getPhotographerCount(event)} Photographer${
-                      getPhotographerCount(event) === 1 ? "" : "s"
-                    }`]
-                      .filter(Boolean)
-                      .join(" • ")
-                  )}</span>
-                </div>
-              `;
+              return renderDetailSchoolLink(
+                event.schoolName,
+                [event.category, event.type, `${getPhotographerCount(event)} Photographer${
+                  getPhotographerCount(event) === 1 ? "" : "s"
+                }`]
+                  .filter(Boolean)
+                  .join(" • ")
+              );
             })
             .join("")
         : '<p class="details-empty-copy">No schools scheduled for this day.</p>';
@@ -872,6 +878,7 @@ function renderDetails() {
           setDayLimit(state.selectedStaffingDayKey, event.target.value);
         });
       }
+      bindDetailSchoolLinks();
       return;
     }
 
@@ -926,14 +933,10 @@ function renderDetails() {
           dayEvents.length
             ? dayEvents
                 .map((event) => {
-                  return `
-                    <div class="detail-school-item">
-                      <strong>${escapeHtml(event.schoolName)}</strong>
-                      <span>${escapeHtml(
-                        [event.category, event.type].filter(Boolean).join(" • ")
-                      )}</span>
-                    </div>
-                  `;
+                  return renderDetailSchoolLink(
+                    event.schoolName,
+                    [event.category, event.type].filter(Boolean).join(" • ")
+                  );
                 })
                 .join("")
             : '<p class="details-empty-copy">No schools currently scheduled for this day.</p>'
@@ -941,6 +944,7 @@ function renderDetails() {
       </div>
       ${renderDayHistoryDetails(historyEntries)}
     `;
+    bindDetailSchoolLinks();
     return;
   }
 
@@ -998,6 +1002,25 @@ function renderDetails() {
       setConfirmedStatus(event.id, !isConfirmedEvent(event));
     });
   }
+}
+
+function bindDetailSchoolLinks() {
+  selectionDetails.querySelectorAll("[data-detail-school]").forEach((button) => {
+    button.addEventListener("click", () => {
+      openSchoolSearch(button.dataset.detailSchool);
+    });
+  });
+}
+
+function openSchoolSearch(schoolName) {
+  state.searchTerm = schoolName;
+  if (searchInput) {
+    searchInput.value = schoolName;
+  }
+  renderSearchResults();
+  window.requestAnimationFrame(() => {
+    searchInput?.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
 }
 
 function renderNotesPanel() {

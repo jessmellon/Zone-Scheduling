@@ -710,6 +710,19 @@ button.search-result-item:focus-visible {
   background: var(--surface-strong);
 }
 
+button.detail-school-item.detail-school-link {
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+
+button.detail-school-item.detail-school-link:hover,
+button.detail-school-item.detail-school-link:focus-visible {
+  background: rgba(24, 102, 75, 0.08);
+  border-color: rgba(24, 102, 75, 0.28);
+  outline: none;
+}
+
 .detail-school-item span,
 .details-empty-copy {
   color: var(--muted);
