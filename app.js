@@ -534,6 +534,10 @@ function renderCalendar() {
     const hasNote = hasDayNote(dayKey);
     const holidayNames = getHolidayNames(dayKey);
 
+    if (hasNote) {
+      cell.classList.add("has-note");
+    }
+
     cell.innerHTML = `
       <div class="day-heading">
         <button
