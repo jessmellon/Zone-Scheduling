@@ -626,6 +626,14 @@ button.search-result-item:focus-visible {
 }
 
 .day-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  min-height: 36px;
+  padding: 4px 8px;
+  border: 2px solid transparent;
+  border-radius: 12px;
   font-size: 1.2rem;
 }
 
@@ -730,14 +738,7 @@ button.detail-school-item.detail-school-link:focus-visible {
 }
 
 .day-number.has-note {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 36px;
-  min-height: 36px;
-  padding: 4px 8px;
   border: 2px solid rgba(24, 102, 75, 0.7);
-  border-radius: 12px;
   background: rgba(24, 102, 75, 0.14);
 }
 
