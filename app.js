@@ -113,6 +113,14 @@ document.querySelector("#staffing-view-button").addEventListener("click", () => 
   render();
 });
 
+document.querySelector("#picture-days-view-button").addEventListener("click", () => {
+  state.viewMode = "picture-days";
+  state.selectedEventId = null;
+  state.selectedStaffingDayKey = null;
+  state.selectedStaffingZoneKey = null;
+  render();
+});
+
 document.querySelector("#standard-layout-button").addEventListener("click", () => {
   state.layoutMode = "standard";
   render();
@@ -331,6 +339,9 @@ function renderViewSwitch() {
   document
     .querySelector("#staffing-view-button")
     .classList.toggle("active", state.viewMode === "staffing");
+  document
+    .querySelector("#picture-days-view-button")
+    .classList.toggle("active", state.viewMode === "picture-days");
 }
 
 function renderLayoutSwitch() {
@@ -565,7 +576,9 @@ function renderCalendar() {
     const groupsMarkup =
       isStaffingLikeView()
         ? renderStaffingGroups(dayKey, allDayEvents)
-        : renderEventGroups(dayEvents);
+        : state.viewMode === "picture-days"
+          ? renderPictureDayGroups(dayEvents)
+          : renderEventGroups(dayEvents);
     const hasNote = hasDayNote(dayKey);
     const holidayNames = getHolidayNames(dayKey);
 
@@ -604,7 +617,7 @@ function renderCalendar() {
       });
     });
 
-    if (state.viewMode === "events") {
+    if (!isStaffingLikeView()) {
       cell.addEventListener("click", (event) => {
         if (event.target.closest("[data-note-day]") || event.target.closest("[data-event-id]")) {
           return;
@@ -700,6 +713,46 @@ function renderEventGroups(dayEvents) {
           <div class="group-label">${escapeHtml(category)}</div>
           ${itemsMarkup}
         </div>
+      `;
+    })
+    .join("");
+}
+
+function renderPictureDayGroups(dayEvents) {
+  return dayEvents
+    .slice()
+    .sort((left, right) => {
+      const rowCompare = (left.rowNumber || Number.MAX_SAFE_INTEGER) - (right.rowNumber || Number.MAX_SAFE_INTEGER);
+      if (rowCompare !== 0) {
+        return rowCompare;
+      }
+      return left.title.localeCompare(right.title);
+    })
+    .map((event) => {
+      return `
+        <button
+          class="event-pill picture-day-pill${
+            state.selectedEventId === event.id ? " is-selected" : ""
+          }"
+          type="button"
+          data-event-id="${escapeHtml(event.id)}"
+        >
+          <span class="event-title">${escapeHtml(event.schoolName)}</span>
+          <span class="event-meta">${escapeHtml(
+            [
+              event.stars,
+              event.type,
+              event.sent,
+              isConfirmedEvent(event) ? "Confirmed" : "Not confirmed",
+              event.category,
+              `${getPhotographerCount(event)} Photographer${
+                getPhotographerCount(event) === 1 ? "" : "s"
+              }`,
+            ]
+              .filter(Boolean)
+              .join(" • ")
+          )}</span>
+        </button>
       `;
     })
     .join("");
@@ -992,7 +1045,11 @@ function renderDetails() {
     selectionDetails.className = "details-card";
     selectionDetails.innerHTML = `
       <h3>Details</h3>
-      <p>Select an event on the calendar to inspect it.</p>
+      <p>${
+        state.viewMode === "picture-days"
+          ? "Select a picture day entry on the calendar to inspect it."
+          : "Select an event on the calendar to inspect it."
+      }</p>
       ${renderColorLegend()}
     `;
     return;

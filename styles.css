@@ -811,6 +811,21 @@ button.detail-school-item.detail-school-link:focus-visible {
   outline: none;
 }
 
+.picture-day-pill {
+  border-left-width: 0;
+  padding: 7px 8px;
+}
+
+.picture-day-pill .event-title {
+  font-size: 0.76rem;
+}
+
+.picture-day-pill .event-meta {
+  margin-top: 2px;
+  font-size: 0.64rem;
+  line-height: 1.35;
+}
+
 .zone-summary-card {
   cursor: pointer;
 }
