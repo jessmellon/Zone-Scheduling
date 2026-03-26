@@ -357,7 +357,8 @@ function renderLayoutMode() {
   const isFullMonthLayout = state.layoutMode === "full-month";
   layoutRoot?.classList.toggle("full-month-layout", isFullMonthLayout);
   calendarGrid.classList.toggle("full-month-layout", isFullMonthLayout);
-  weekdayRow?.classList.toggle("is-hidden", isFullMonthLayout);
+  weekdayRow?.classList.toggle("is-hidden", isFullMonthLayout || state.viewMode === "picture-days");
+  calendarGrid.classList.toggle("picture-days-list", state.viewMode === "picture-days");
 }
 
 function renderHeader() {
@@ -506,6 +507,10 @@ function renderAttributeFilterList(container, values, activeValue, onSelect) {
 function renderCalendar() {
   const monthStart = startOfMonth(state.currentMonth);
   const monthEnd = endOfMonth(state.currentMonth);
+  if (state.viewMode === "picture-days") {
+    renderPictureDaysList(monthStart, monthEnd);
+    return;
+  }
   const isFullMonthLayout = state.layoutMode === "full-month";
   const gridStart = startOfWeek(monthStart);
   const gridEnd = endOfWeek(monthEnd);
@@ -681,6 +686,84 @@ function renderCalendar() {
 
     calendarGrid.appendChild(cell);
   }
+}
+
+function renderPictureDaysList(monthStart, monthEnd) {
+  const monthEvents = getVisibleEvents()
+    .filter((event) => event.date >= monthStart && event.date <= monthEnd)
+    .slice()
+    .sort((left, right) => {
+      if (left.date.getTime() !== right.date.getTime()) {
+        return left.date - right.date;
+      }
+      const rowCompare =
+        (left.rowNumber || Number.MAX_SAFE_INTEGER) - (right.rowNumber || Number.MAX_SAFE_INTEGER);
+      if (rowCompare !== 0) {
+        return rowCompare;
+      }
+      return left.title.localeCompare(right.title);
+    });
+
+  if (!monthEvents.length) {
+    calendarGrid.innerHTML = `
+      <div class="picture-days-empty">
+        No picture day rows match the current month and filters.
+      </div>
+    `;
+    return;
+  }
+
+  const headerMarkup = `
+    <div class="picture-days-header">
+      <span>School</span>
+      <span>Stars</span>
+      <span>Date</span>
+      <span>Sent?</span>
+      <span>Zone</span>
+      <span>Photographers</span>
+      <span>Type</span>
+      <span>Confirmed</span>
+    </div>
+  `;
+
+  const rowsMarkup = monthEvents
+    .map((event) => {
+      return `
+        <button
+          class="picture-days-row${state.selectedEventId === event.id ? " is-selected" : ""}"
+          type="button"
+          data-event-id="${escapeHtml(event.id)}"
+        >
+          <span>${escapeHtml(event.schoolName)}</span>
+          <span>${escapeHtml(event.stars || "")}</span>
+          <span>${escapeHtml(
+            event.date.toLocaleDateString(undefined, {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            })
+          )}</span>
+          <span>${escapeHtml(event.sent || "")}</span>
+          <span>${escapeHtml(event.category || "")}</span>
+          <span>${escapeHtml(String(getPhotographerCount(event) || ""))}</span>
+          <span>${escapeHtml(event.type || "")}</span>
+          <span>${escapeHtml(isConfirmedEvent(event) ? "Confirmed" : "Not confirmed")}</span>
+        </button>
+      `;
+    })
+    .join("");
+
+  calendarGrid.innerHTML = `${headerMarkup}${rowsMarkup}`;
+
+  calendarGrid.querySelectorAll("[data-event-id]").forEach((button) => {
+    button.addEventListener("click", () => {
+      state.selectedEventId = button.dataset.eventId;
+      state.selectedEventsDayKey = null;
+      renderDetails();
+      renderCalendar();
+      scrollDetailsIntoView();
+    });
+  });
 }
 
 function renderEventGroups(dayEvents) {

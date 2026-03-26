@@ -591,6 +591,64 @@ button.search-result-item:focus-visible {
   padding: 10px 8px;
 }
 
+.calendar-grid.picture-days-list {
+  display: flex;
+  flex-direction: column;
+  min-height: auto;
+  gap: 0;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.picture-days-header,
+.picture-days-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 1.5fr) 80px 120px 90px 70px 110px minmax(160px, 1.2fr) 110px;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 14px;
+}
+
+.picture-days-header {
+  background: rgba(85, 65, 130, 0.1);
+  border-bottom: 1px solid var(--line);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.picture-days-row {
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid rgba(70, 61, 50, 0.08);
+  background: transparent;
+  text-align: left;
+  color: var(--text);
+}
+
+.picture-days-row:last-child {
+  border-bottom: 0;
+}
+
+.picture-days-row:hover,
+.picture-days-row:focus-visible {
+  background: rgba(24, 102, 75, 0.06);
+  outline: none;
+}
+
+.picture-days-row.is-selected {
+  background: rgba(24, 102, 75, 0.12);
+}
+
+.picture-days-empty {
+  padding: 18px;
+  color: var(--muted);
+}
+
 .day-cell {
   min-height: 152px;
   padding: 12px;
