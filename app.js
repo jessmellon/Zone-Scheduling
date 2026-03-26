@@ -1218,7 +1218,7 @@ function openDateSheetPrintView(schoolName) {
   }
 
   const schoolYearLabel = buildSchoolYearLabel(schoolEvents);
-  const printWindow = window.open("", "_blank", "noopener,noreferrer");
+  const printWindow = window.open("", "_blank");
   if (!printWindow) {
     setStatus("Unable to open date sheet. Check whether your browser blocked the pop-up.");
     return;
