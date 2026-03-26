@@ -330,6 +330,11 @@ h1 {
   color: var(--text);
 }
 
+.date-sheet-button {
+  margin-bottom: 10px;
+  width: 100%;
+}
+
 .search-result-list {
   display: flex;
   flex-direction: column;

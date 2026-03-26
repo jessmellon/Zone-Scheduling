@@ -1118,6 +1118,132 @@ function openSchoolSearch(schoolName) {
   });
 }
 
+function openDateSheetPrintView(schoolName) {
+  const normalizedSchool = normalizeSchoolName(schoolName);
+  const schoolEvents = state.events
+    .filter((event) => normalizeSchoolName(event.schoolName) === normalizedSchool)
+    .sort((left, right) => {
+      if (left.date.getTime() !== right.date.getTime()) {
+        return left.date - right.date;
+      }
+      return left.title.localeCompare(right.title);
+    });
+
+  if (!schoolEvents.length) {
+    setStatus("Unable to create date sheet: no dates found for that school.");
+    return;
+  }
+
+  const schoolYearLabel = buildSchoolYearLabel(schoolEvents);
+  const printWindow = window.open("", "_blank", "noopener,noreferrer");
+  if (!printWindow) {
+    setStatus("Unable to open date sheet. Check whether your browser blocked the pop-up.");
+    return;
+  }
+
+  printWindow.document.write(buildDateSheetDocument(schoolName, schoolYearLabel, schoolEvents));
+  printWindow.document.close();
+}
+
+function buildSchoolYearLabel(events) {
+  const years = [...new Set(events.map((event) => event.date.getFullYear()))].sort((left, right) => left - right);
+  if (!years.length) {
+    return "";
+  }
+  if (years.length === 1) {
+    return `${years[0]}-${years[0] + 1}`;
+  }
+  return `${years[0]}-${years[years.length - 1]}`;
+}
+
+function buildDateSheetDocument(schoolName, schoolYearLabel, events) {
+  const rowsMarkup = events
+    .map((event) => {
+      return `
+        <tr>
+          <td class="program-cell">${escapeHtml(event.type || "Picture Day")}</td>
+          <td>${escapeHtml(
+            event.date.toLocaleDateString(undefined, {
+              month: "long",
+              day: "numeric",
+              year: "numeric",
+            })
+          )}</td>
+          <td>&mdash;</td>
+          <td>${escapeHtml(String(getPhotographerCount(event) || ""))}</td>
+          <td>&mdash;</td>
+          <td>${escapeHtml(event.category || "")}</td>
+        </tr>
+      `;
+    })
+    .join("");
+
+  return `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>${escapeHtml(schoolName)} Date Sheet</title>
+    <style>
+      body { margin: 0; padding: 32px; font-family: "Avenir Next", "Segoe UI", sans-serif; color: #1f2937; background: #ffffff; }
+      .sheet { max-width: 900px; margin: 0 auto; }
+      .brand { text-align: right; font-size: 14px; font-weight: 700; color: #4c3b83; margin-bottom: 18px; }
+      .title { text-align: center; margin-bottom: 8px; }
+      .title h1 { margin: 0; font-size: 26px; }
+      .title h2 { margin: 8px 0 0; font-size: 20px; }
+      .divider { margin: 22px 0 10px; border-top: 2px solid #cbd5e1; }
+      .section-label { font-size: 22px; font-weight: 700; margin: 0 0 14px; }
+      .intro { margin: 0 0 18px; line-height: 1.45; font-size: 15px; }
+      table { width: 100%; border-collapse: collapse; font-size: 14px; }
+      th, td { border: 1px solid #d7dee7; padding: 10px 8px; vertical-align: top; }
+      th { background: #eef2f7; text-align: left; font-weight: 700; }
+      tbody tr:nth-child(even) { background: #f7faf7; }
+      .program-cell { color: #4c3b83; font-weight: 700; }
+      .footer-note { margin-top: 14px; font-size: 15px; }
+      .signature-row { display: grid; grid-template-columns: 1fr 220px; gap: 40px; margin-top: 60px; align-items: end; font-size: 14px; }
+      .signature-line { border-top: 1px solid #9ca3af; padding-top: 8px; }
+      .closing { margin-top: 24px; font-size: 15px; }
+      @media print { body { padding: 0.35in; } }
+    </style>
+  </head>
+  <body onload="window.print()">
+    <div class="sheet">
+      <div class="brand">Victor O'Neill Studios</div>
+      <div class="title">
+        <h1>${escapeHtml(schoolYearLabel)} Photography Dates</h1>
+        <h2>${escapeHtml(schoolName)}</h2>
+      </div>
+      <div class="divider"></div>
+      <p class="section-label">School Picture Dates</p>
+      <p class="intro">
+        In preparation for the ${escapeHtml(schoolYearLabel)} portrait season, Victor O'Neill Studios is pleased to propose to
+        <strong>${escapeHtml(schoolName)}</strong> the following school picture dates. Please sign and return the document
+        within four weeks to confirm the reservation of the dates below.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Program</th>
+            <th>Date</th>
+            <th>Timeframe</th>
+            <th>Number of Cameras</th>
+            <th>Location</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>${rowsMarkup}</tbody>
+      </table>
+      <p class="footer-note"><strong>Additional Events, TBD:</strong></p>
+      <div class="signature-row">
+        <div class="signature-line">Accepted by:</div>
+        <div class="signature-line">Date:</div>
+      </div>
+      <p class="closing">We look forward to working with you and the students at <strong>${escapeHtml(schoolName)}</strong>.</p>
+    </div>
+  </body>
+</html>`;
+}
+
 function renderNotesPanel() {
   if (!state.selectedNoteDateKey) {
     noteDateLabel.textContent = "Select a day or zone to add a note.";
@@ -1231,6 +1357,13 @@ function renderSearchResults() {
       return `
         <div class="search-result-card">
           <h3>${escapeHtml(schoolName)}</h3>
+          <button
+            class="ghost-button date-sheet-button"
+            type="button"
+            data-generate-date-sheet="${escapeHtml(schoolName)}"
+          >
+            Create Date Sheet
+          </button>
           <div class="search-result-list">${itemsMarkup}</div>
           ${historyMarkup}
         </div>
@@ -1246,6 +1379,11 @@ function renderSearchResults() {
         return;
       }
       jumpToEventInStaffingView(event);
+    });
+  });
+  searchResults.querySelectorAll("[data-generate-date-sheet]").forEach((button) => {
+    button.addEventListener("click", () => {
+      openDateSheetPrintView(button.dataset.generateDateSheet);
     });
   });
 }
