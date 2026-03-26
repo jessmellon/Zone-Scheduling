@@ -279,6 +279,8 @@ function buildEvents(sheetData) {
     sent: findHeaderIndex(headers, ["Sent?"]),
     photographers: findHeaderIndex(headers, ["Photographers"]),
     type: findHeaderIndex(headers, ["Type"]),
+    timeframe: findHeaderIndex(headers, ["Timeframe", "Time Frame", "Start Time", "StartTime"]),
+    location: findHeaderIndex(headers, ["Location"]),
     confirmed: findHeaderIndex(headers, ["Confirmed", "Roosted", "Added To Roosted", "Added to Roosted"]),
     rowNumber: findHeaderIndex(headers, ["RowNumber", "Source Row", "Row"]),
   };
@@ -308,6 +310,8 @@ function buildEvents(sheetData) {
         sent: readCell(row.c, indexes.sent),
         photographers: readCell(row.c, indexes.photographers),
         type: readCell(row.c, indexes.type),
+        timeframe: readCell(row.c, indexes.timeframe),
+        location: readCell(row.c, indexes.location),
         confirmed: parseConfirmedCell(readCell(row.c, indexes.confirmed, true)),
         rowNumber: parseSourceRow(readCell(row.c, indexes.rowNumber, true)),
       };
@@ -1244,7 +1248,7 @@ function buildDateSheetDocument(schoolName, schoolYearLabel, events) {
     .map((event) => {
       return `
         <tr>
-          <td class="program-cell">${escapeHtml(event.type || "Picture Day")}</td>
+          <td class="program-cell" contenteditable="true">${escapeHtml(event.type || "Picture Day")}</td>
           <td>${escapeHtml(
             event.date.toLocaleDateString(undefined, {
               month: "long",
@@ -1252,10 +1256,10 @@ function buildDateSheetDocument(schoolName, schoolYearLabel, events) {
               year: "numeric",
             })
           )}</td>
-          <td>&mdash;</td>
-          <td>${escapeHtml(String(getPhotographerCount(event) || ""))}</td>
-          <td>&mdash;</td>
-          <td>${escapeHtml(event.category || "")}</td>
+          <td contenteditable="true">${escapeHtml(event.timeframe || "")}</td>
+          <td contenteditable="true">${escapeHtml(String(getPhotographerCount(event) || ""))}</td>
+          <td contenteditable="true">${escapeHtml(event.location || "")}</td>
+          <td contenteditable="true"></td>
         </tr>
       `;
     })
@@ -1269,6 +1273,9 @@ function buildDateSheetDocument(schoolName, schoolYearLabel, events) {
     <title>${escapeHtml(schoolName)} Date Sheet</title>
     <style>
       body { margin: 0; padding: 32px; font-family: "Avenir Next", "Segoe UI", sans-serif; color: #1f2937; background: #ffffff; }
+      .toolbar { display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 18px; }
+      .toolbar button { border: 0; border-radius: 999px; padding: 10px 16px; background: #18664b; color: #ffffff; font: inherit; cursor: pointer; }
+      .toolbar button.secondary { background: #e8ecf1; color: #1f2937; }
       .sheet { max-width: 900px; margin: 0 auto; }
       .brand { text-align: right; font-size: 14px; font-weight: 700; color: #4c3b83; margin-bottom: 18px; }
       .title { text-align: center; margin-bottom: 8px; }
@@ -1286,19 +1293,28 @@ function buildDateSheetDocument(schoolName, schoolYearLabel, events) {
       .signature-row { display: grid; grid-template-columns: 1fr 220px; gap: 40px; margin-top: 60px; align-items: end; font-size: 14px; }
       .signature-line { border-top: 1px solid #9ca3af; padding-top: 8px; }
       .closing { margin-top: 24px; font-size: 15px; }
-      @media print { body { padding: 0.35in; } }
+      [contenteditable="true"] { outline: none; }
+      [contenteditable="true"]:focus { box-shadow: inset 0 0 0 2px rgba(24, 102, 75, 0.22); background: #f8fffb; }
+      @media print {
+        body { padding: 0.35in; }
+        .toolbar { display: none; }
+      }
     </style>
   </head>
-  <body onload="window.print()">
+  <body>
     <div class="sheet">
+      <div class="toolbar">
+        <button class="secondary" type="button" onclick="window.close()">Close</button>
+        <button type="button" onclick="window.print()">Print / Save PDF</button>
+      </div>
       <div class="brand">Victor O'Neill Studios</div>
       <div class="title">
-        <h1>${escapeHtml(schoolYearLabel)} Photography Dates</h1>
-        <h2>${escapeHtml(schoolName)}</h2>
+        <h1 contenteditable="true">${escapeHtml(schoolYearLabel)} Photography Dates</h1>
+        <h2 contenteditable="true">${escapeHtml(schoolName)}</h2>
       </div>
       <div class="divider"></div>
       <p class="section-label">School Picture Dates</p>
-      <p class="intro">
+      <p class="intro" contenteditable="true">
         In preparation for the ${escapeHtml(schoolYearLabel)} portrait season, Victor O'Neill Studios is pleased to propose to
         <strong>${escapeHtml(schoolName)}</strong> the following school picture dates. Please sign and return the document
         within four weeks to confirm the reservation of the dates below.
@@ -1316,12 +1332,12 @@ function buildDateSheetDocument(schoolName, schoolYearLabel, events) {
         </thead>
         <tbody>${rowsMarkup}</tbody>
       </table>
-      <p class="footer-note"><strong>Additional Events, TBD:</strong></p>
+      <p class="footer-note" contenteditable="true"><strong>Additional Events, TBD:</strong></p>
       <div class="signature-row">
-        <div class="signature-line">Accepted by:</div>
-        <div class="signature-line">Date:</div>
+        <div class="signature-line" contenteditable="true">Accepted by:</div>
+        <div class="signature-line" contenteditable="true">Date:</div>
       </div>
-      <p class="closing">We look forward to working with you and the students at <strong>${escapeHtml(schoolName)}</strong>.</p>
+      <p class="closing" contenteditable="true">We look forward to working with you and the students at <strong>${escapeHtml(schoolName)}</strong>.</p>
     </div>
   </body>
 </html>`;
