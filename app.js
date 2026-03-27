@@ -533,6 +533,7 @@ function renderCalendar() {
     cursor = addDays(cursor, 1)
   ) {
     const dayKey = formatDateKey(cursor);
+    const isOtherMonth = cursor.getMonth() !== monthStart.getMonth();
     const dayEvents = visibleEvents.filter(
       (event) => formatDateKey(event.date) === dayKey
     );
@@ -543,7 +544,7 @@ function renderCalendar() {
     cell.className = "day-cell";
     const isWeekend = cursor.getDay() === 0 || cursor.getDay() === 6;
 
-    if (cursor.getMonth() !== monthStart.getMonth()) {
+    if (isOtherMonth) {
       cell.classList.add("is-other-month");
     }
 
@@ -603,7 +604,13 @@ function renderCalendar() {
           data-note-day="${dayKey}"
           aria-label="Open note for ${escapeHtml(dayKey)}"
         >
-          <div class="day-number${hasNote ? " has-note" : ""}">${cursor.getDate()}</div>
+          <div class="day-number${hasNote ? " has-note" : ""}">${cursor.getDate()}${
+            isOtherMonth
+              ? `<span class="day-month-label">${escapeHtml(
+                  cursor.toLocaleDateString(undefined, { month: "short" })
+                )}</span>`
+              : ""
+          }</div>
         </button>
         <div class="day-name">${escapeHtml(
           cursor.toLocaleDateString(undefined, { weekday: "short" })

@@ -703,7 +703,7 @@ button.search-result-item:focus-visible {
 }
 
 .day-cell.is-other-month {
-  opacity: 0.45;
+  opacity: 1;
 }
 
 .day-cell.is-today {
@@ -730,6 +730,16 @@ button.search-result-item:focus-visible {
   border: 2px solid transparent;
   border-radius: 12px;
   font-size: 1.2rem;
+}
+
+.day-month-label {
+  margin-left: 6px;
+  font-size: 0.66rem;
+  font-family: "Avenir Next", "Segoe UI", sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
 }
 
 .day-heading {
