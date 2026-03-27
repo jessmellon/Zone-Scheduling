@@ -832,6 +832,12 @@ button.detail-school-item.detail-school-link:focus-visible {
   font-size: 0.9rem;
 }
 
+.highrise-info {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
 .day-number.has-note {
   border: 2px solid rgba(24, 102, 75, 0.7);
   background: rgba(24, 102, 75, 0.14);

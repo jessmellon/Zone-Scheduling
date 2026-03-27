@@ -1176,6 +1176,7 @@ function renderDetails() {
           : '<p class="details-empty-copy">Add a RowNumber column from Table Main Tab before confirming from the site.</p>'
       }
     </div>
+    ${renderHighriseInfoSection(event.schoolName)}
   `;
 
   const confirmButton = selectionDetails.querySelector("[data-confirm-toggle]");
@@ -1184,6 +1185,32 @@ function renderDetails() {
       setConfirmedStatus(event.id, !isConfirmedEvent(event));
     });
   }
+}
+
+function renderHighriseInfoSection(schoolName) {
+  const lookupKey = buildHighriseLookupKey(schoolName);
+
+  return `
+    <div class="detail-history highrise-info">
+      <h3>Highrise Info</h3>
+      <div class="detail-grid">
+        ${renderDetailItem("Lookup Method", "Normalized school name")}
+        ${renderDetailItem("Lookup Key", lookupKey)}
+      </div>
+      <p class="details-empty-copy">
+        Highrise is not connected yet. When we add the API, this section will show the closest school match and the account details your team needs.
+      </p>
+      <p class="details-empty-copy">
+        Future improvement: replace name matching with VOS School ID once that field is added to the sheet.
+      </p>
+    </div>
+  `;
+}
+
+function buildHighriseLookupKey(schoolName) {
+  return normalizeSchoolName(schoolName)
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
 }
 
 function bindDetailSchoolLinks() {
