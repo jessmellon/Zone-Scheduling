@@ -3,8 +3,6 @@ const SHEET_GVIZ_URL =
 const LIMITS_API_URL =
   "https://script.google.com/macros/s/AKfycbzR4cRjr4WDOkV8UQ2g2HuWlxdeyOfkRUZ1mw6sRIK8hlsmZ5CcomH-LWLtGuMe9tHf/exec";
 const ALL_ZONES = ["Z1", "Z2", "Z3", "Z4", "Z5"];
-const SITE_PASSWORD = "VOS4437";
-const PASSWORD_STORAGE_KEY = "zone_scheduling_unlocked";
 
 const state = {
   events: [],
@@ -61,10 +59,6 @@ const dayNotesPanel = document.querySelector("#day-notes-panel");
 const saveNoteButton = document.querySelector("#save-note");
 const noteHistory = document.querySelector("#note-history");
 const calendarPanel = document.querySelector(".calendar-panel");
-const passwordGate = document.querySelector("#password-gate");
-const passwordForm = document.querySelector("#password-form");
-const passwordInput = document.querySelector("#password-input");
-const passwordError = document.querySelector("#password-error");
 
 document.querySelector("#save-note").addEventListener("click", () => {
   saveSelectedNote();
@@ -140,12 +134,7 @@ dayNoteInput.addEventListener("input", () => {
   updateNoteSaveButtonState();
 });
 
-passwordForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-  unlockSite();
-});
-
-initializePasswordGate();
+loadCalendar();
 
 async function loadCalendar() {
   setStatus("Loading live data from Google Sheets...");
@@ -181,34 +170,6 @@ async function loadCalendar() {
     setStatus(`Unable to render the page: ${error.message}`);
     lastUpdated.textContent = "Render failed";
   }
-}
-
-function initializePasswordGate() {
-  const alreadyUnlocked = window.localStorage.getItem(PASSWORD_STORAGE_KEY) === "true";
-
-  if (alreadyUnlocked) {
-    passwordGate.classList.add("is-hidden");
-    loadCalendar();
-    return;
-  }
-
-  passwordGate.classList.remove("is-hidden");
-  passwordInput.focus();
-}
-
-function unlockSite() {
-  const enteredPassword = passwordInput.value;
-
-  if (enteredPassword !== SITE_PASSWORD) {
-    passwordError.classList.remove("is-hidden");
-    passwordInput.select();
-    return;
-  }
-
-  passwordError.classList.add("is-hidden");
-  window.localStorage.setItem(PASSWORD_STORAGE_KEY, "true");
-  passwordGate.classList.add("is-hidden");
-  loadCalendar();
 }
 
 function loadGvizData() {

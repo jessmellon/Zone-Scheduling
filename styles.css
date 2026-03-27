@@ -35,50 +35,6 @@ button {
   cursor: pointer;
 }
 
-.password-gate {
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-  background: rgba(42, 36, 30, 0.42);
-  backdrop-filter: blur(10px);
-}
-
-.password-card {
-  width: min(100%, 420px);
-  padding: 28px;
-  border: 1px solid rgba(255, 255, 255, 0.28);
-  border-radius: 28px;
-  background: rgba(255, 250, 243, 0.96);
-  box-shadow: var(--shadow);
-}
-
-.password-card h2 {
-  margin: 0;
-  font-size: 2rem;
-}
-
-.password-copy {
-  margin: 12px 0 18px;
-  color: var(--muted);
-}
-
-.password-form {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.password-error {
-  margin: 12px 0 0;
-  color: #9f1239;
-  font-size: 0.9rem;
-  font-weight: 700;
-}
-
 .page-shell {
   max-width: 1480px;
   margin: 0 auto;
